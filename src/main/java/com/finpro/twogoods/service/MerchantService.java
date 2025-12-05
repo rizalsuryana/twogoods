@@ -33,7 +33,6 @@ public class MerchantService {
                 .build();
 
         Merchant merchant = Merchant.builder()
-                                    .merchantName(request.getMerchantName())
                                     .user(user)
                                     .build();
 

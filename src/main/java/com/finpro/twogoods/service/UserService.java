@@ -27,20 +27,15 @@ public class UserService implements UserDetailsService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+		        .name(request.getName())
                 .role(UserRole.CUSTOMER)
                 .build();
         return userRepository.saveAndFlush(user);
     }
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = userRepository.findUserByEmail(username)
-		                          .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-		return org.springframework.security.core.userdetails.User
-				.withUsername(user.getEmail())
-				.password(user.getPassword())
-				.roles(user.getRole().name())
-				.build();
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		return userRepository.findByEmail(email)
+		                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 	}
 }

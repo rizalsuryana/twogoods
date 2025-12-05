@@ -31,36 +31,20 @@ public class AuthService {
     @Value("${twogoods.admin.password}")
     private String ADMIN_PASSWORD;
 
-    public LoginResponse loginCustomer(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword())
         );
 
-        Customer customer = (Customer ) authentication.getPrincipal();
+        User user = (User) authentication.getPrincipal();
 
-        String token = jwtTokenProvider.generateToken(customer.getUser());
+	    String token = jwtTokenProvider.generateToken(user);
         return LoginResponse.builder()
                 .accessToken(token)
-                .user(customer.toUserResponse())
+                .user(user.toResponse())
                 .build();
-    }
-
-    public LoginResponse loginMerchant(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword())
-        );
-
-        Merchant merchant = (Merchant) authentication.getPrincipal();
-        String token = jwtTokenProvider.generateToken(merchant.getUser());
-
-        return LoginResponse.builder()
-                            .accessToken(token)
-                            .user(merchant.toUserResponse())
-                            .build();
     }
 
 

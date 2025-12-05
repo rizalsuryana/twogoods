@@ -32,13 +32,14 @@ public class JwtTokenProvider {
 		return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
 	}
 
-	public String generateToken (User user) {
+	public String generateToken(User user) {
+		String roleName = user.getRole().getRoleName();
 		return Jwts.builder()
 		           .subject(user.getEmail())
 		           .issuer(jwtIssuer)
 		           .issuedAt(new Date())
 		           .expiration(new Date(System.currentTimeMillis() + jwtExpiration * 1000))
-		           .claim("role", user.getRole().getRoleName())
+		           .claim("role", roleName)
 		           .signWith(getSigningKey())
 		           .compact();
 	}

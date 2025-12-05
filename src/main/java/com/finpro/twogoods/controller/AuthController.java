@@ -3,8 +3,8 @@ package com.finpro.twogoods.controller;
 import com.finpro.twogoods.entity.Customer;
 import com.finpro.twogoods.entity.UserRole;
 import com.finpro.twogoods.model.request.LoginRequest;
+import com.finpro.twogoods.model.response.LoginResponse;
 import com.finpro.twogoods.service.AuthService;
-import com.finpro.twogoods.service.CustomerService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,20 +19,12 @@ public class AuthController {
 
 	private final AuthService authService;
 
-	@PostMapping("/login")
+	@PostMapping( "/login" )
 	public ResponseEntity<?> loginHandler(@RequestBody @Valid LoginRequest request) {
 
-		Object response = switch (request.getRole()) {
-			case CUSTOMER -> authService.loginCustomer(request);
-			case MERCHANT -> authService.loginMerchant(request);
-			default -> throw new IllegalArgumentException("Invalid user role");
-		};
+		LoginResponse response = authService.login(request);
 
-		return ResponseUtil.buildSingleResponse(
-				HttpStatus.OK,
-				HttpStatus.OK.getReasonPhrase(),
-				response
-		                                       );
+		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), response);
 	}
 
 }

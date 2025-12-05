@@ -16,8 +16,6 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class Merchant extends BaseEntity {
-	@Column(name = "merchant_name", nullable = false)
-	private String merchantName;
 
 	@Column(nullable = false)
 	private String address;
@@ -28,13 +26,4 @@ public class Merchant extends BaseEntity {
 
 
 //	Helper untuk response
-    public UserResponse toUserResponse() {
-        return  UserResponse.builder()
-                .email(user.getEmail())
-                .role(user.getRole())
-                .profilePicture(user.getProfilePicture())
-                .location(user.getLocation())
-                .name(merchantName)
-                            .build();
-    }
 }

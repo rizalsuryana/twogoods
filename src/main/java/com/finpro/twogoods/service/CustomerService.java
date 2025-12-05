@@ -15,21 +15,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class CustomerService {
-    private final CustomerRepository customerRepository;
-    private final PasswordEncoder    passwordEncoder;
-    private final UserRepository     userRepository;
-    private final UserService        userService;
+	private final CustomerRepository customerRepository;
+	private final PasswordEncoder    passwordEncoder;
+	private final UserRepository     userRepository;
+	private final UserService        userService;
 
-    @Transactional( rollbackFor = Exception.class )
-    public Customer createCustomerUser (CustomerRegisterRequest request) {
-        if ( userRepository.existsByEmail(request.getEmail()) ) {
-            throw new ResourceDuplicateException("Email already exists");
-        }
+	@Transactional( rollbackFor = Exception.class )
+	public Customer createCustomerUser (CustomerRegisterRequest request) {
+		if ( userRepository.existsByEmail(request.getEmail()) ) {
+			throw new ResourceDuplicateException("Email already exists");
+		}
 
-        User user = userService.createUser(request);
+		User user = userService.createUser(request);
 
-        Customer customer = Customer.builder().user(user).fullName(request.getFullName()).build();
+		Customer customer = Customer.builder().user(user).build();
 
-        return customerRepository.saveAndFlush(customer);
-    }
+		return customerRepository.saveAndFlush(customer);
+	}
 }

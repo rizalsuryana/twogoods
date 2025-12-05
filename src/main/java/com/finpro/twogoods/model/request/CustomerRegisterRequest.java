@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class CustomerRegisterRequest {
 	@NotBlank
-	private String fullName;
+	private String name;
 	@NotBlank
 	@Email
 	private String email;
