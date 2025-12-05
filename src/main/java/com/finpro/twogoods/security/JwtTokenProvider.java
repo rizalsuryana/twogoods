@@ -15,53 +15,54 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-    @Value("${jwt.secret}")
-    private String jwtSecret;
 
-    @Value("${jwt.expiration}")
-    private Long jwtExpiration;
+	@Value("${jwt.secret}")
+	private String jwtSecret;
 
-    @Value("${jwt.issuer}")
-    private String jwtIssuer;
+	@Value("${jwt.expiration}") // in seconds
+	private Long jwtExpiration;
 
-    @Value("${jwt.refresh_expiration}")
-    private Long jwtRefreshToken;
+	@Value("${jwt.issuer}")
+	private String jwtIssuer;
 
-    public String generateToken(User user) {
-        return Jwts.builder()
-                .subject(user.getEmail())
-                .issuer(jwtIssuer)
-                .issuedAt(new Date())
-                .expiration(new Date(new Date().getTime() + jwtExpiration))
-                .claim("role", user.getRole().getRoleName())
-                .signWith(getSigningKey())
-                .compact();
-    }
+	@Value("${jwt.refresh_expiration}") // in seconds
+	private Long jwtRefreshExpiration;
 
-    // 2. Verify Token
-    public boolean verifyToken(String token) {
-        try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (ExpiredJwtException e) {
-            throw new JwtAuthenticationException("Token has expired");
-        } catch (JwtException e) {
-            throw new JwtAuthenticationException("Invalid token: " + e.getMessage());
-        }
-    }
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
+	private SecretKey getSigningKey () {
+		return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+	}
 
-    public String extractEmail(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    }
+	public String generateToken (User user) {
+		return Jwts.builder()
+		           .subject(user.getEmail())
+		           .issuer(jwtIssuer)
+		           .issuedAt(new Date())
+		           .expiration(new Date(System.currentTimeMillis() + jwtExpiration * 1000))
+		           .claim("role", user.getRole().getRoleName())
+		           .signWith(getSigningKey())
+		           .compact();
+	}
+
+	public boolean verifyToken(String token) {
+		try {
+			Jwts.parser()
+			    .verifyWith(getSigningKey())
+			    .build()
+			    .parseSignedClaims(token);
+			return true;
+		} catch ( ExpiredJwtException e) {
+			throw new JwtAuthenticationException("Token has expired");
+		} catch ( JwtException e) {
+			throw new JwtAuthenticationException("Invalid token: " + e.getMessage());
+		}
+	}
+
+	public String extractEmail(String token) {
+		return Jwts.parser()
+		           .verifyWith(getSigningKey())
+		           .build()
+		           .parseSignedClaims(token)
+		           .getPayload()
+		           .getSubject();
+	}
 }

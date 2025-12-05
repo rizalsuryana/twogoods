@@ -8,16 +8,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterRequest {
+public class CustomerRegisterRequest {
 	@NotBlank
-	private String firstName;
-	private String lastName;
+	private String fullName;
 	@NotBlank
 	@Email
 	private String email;
-	private String phoneNumber;
 	@NotBlank
 	private String password;
-	@NotBlank
-	private String confirmPassword;
 }

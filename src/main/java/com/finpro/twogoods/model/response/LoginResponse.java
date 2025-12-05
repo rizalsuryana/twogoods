@@ -10,9 +10,5 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginResponse {
 	private String accessToken;
-	private String refreshToken;
-	private String tokenType;
-	private Long tokenExpiration;
-	private String username;
-	private String role;
+	private UserResponse user;
 }

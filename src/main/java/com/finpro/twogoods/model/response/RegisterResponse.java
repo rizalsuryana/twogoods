@@ -10,8 +10,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RegisterResponse {
-	private String firstName;
-	private String lastName;
+	private String fullName;
 	private String email;
-	private String phoneNumber;
+    private long userId;
 }

@@ -1,5 +1,6 @@
 package com.finpro.twogoods.entity;
 
+import com.finpro.twogoods.model.response.UserResponse;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,12 +28,14 @@ public class User extends BaseEntity implements UserDetails {
 	private UserRole role;
 
 	@Column(nullable = false)
+    @Builder.Default
 	private boolean enabled = true;
 
 	@Column(name = "profile_picture")
 	private String profilePicture;
 
-
+    @Column(name = "location")
+    private String location;
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

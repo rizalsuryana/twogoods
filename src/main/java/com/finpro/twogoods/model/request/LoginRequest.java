@@ -1,5 +1,6 @@
 package com.finpro.twogoods.model.request;
 
+import com.finpro.twogoods.entity.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
@@ -11,5 +12,7 @@ public class LoginRequest {
 	@NotBlank
 	private String email;
 	@NotBlank
-	private String password;
+	private String   password;
+	@NotBlank
+	private UserRole role;
 }

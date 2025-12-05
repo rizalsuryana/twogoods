@@ -1,7 +1,9 @@
 package com.finpro.twogoods.entity;
 
 
+import com.finpro.twogoods.model.response.UserResponse;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,9 +21,6 @@ public class Merchant extends BaseEntity {
 
 	@Column(nullable = false)
 	private String address;
-	@Column(name = "birth_date", nullable = false)
-	private LocalDateTime birthDate;
-
 
 	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id")
@@ -29,4 +28,13 @@ public class Merchant extends BaseEntity {
 
 
 //	Helper untuk response
+    public UserResponse toUserResponse() {
+        return  UserResponse.builder()
+                .email(user.getEmail())
+                .role(user.getRole())
+                .profilePicture(user.getProfilePicture())
+                .location(user.getLocation())
+                .name(merchantName)
+                            .build();
+    }
 }
