@@ -1,24 +1,41 @@
 package com.finpro.twogoods.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+
+import com.finpro.twogoods.enums.ProductCondition;
+import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
 public class Product extends BaseEntity {
-	@Column(name = "product_name", nullable = false)
-	private String productName;
 
-	@Column(name = "product_pictures")
-	private String productPicture;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "merchant_id", nullable = false)
+	private MerchantProfile merchant;
 
-// TODO	Relations
-// TODO	toResponse (helper)
+	private String name;
+
+	@Column(columnDefinition = "TEXT")
+	private String description;
+
+	private BigDecimal price;
+
+	private String category;
+
+	private String color;
+
+	private boolean isAvailable;
+
+	@Enumerated(EnumType.STRING)
+	private ProductCondition condition;
+
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ProductImage> images;
+
 }
