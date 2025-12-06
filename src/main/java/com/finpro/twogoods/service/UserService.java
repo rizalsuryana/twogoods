@@ -44,7 +44,7 @@ public class UserService implements UserDetailsService {
 	}
 
 	// REGISTER CUSTOMER
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User createCustomer(CustomerRegisterRequest request) {
 
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
@@ -77,7 +77,6 @@ public class UserService implements UserDetailsService {
 
 		CustomerProfile profile = CustomerProfile.builder()
 				.user(user)
-				.location(request.getLocation())
 				.build();
 
 		customerProfileRepository.save(profile);

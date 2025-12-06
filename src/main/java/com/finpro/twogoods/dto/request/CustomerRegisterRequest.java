@@ -25,6 +25,4 @@ public class CustomerRegisterRequest {
 	@NotBlank
 	private String confirmPassword;
 
-	@NotBlank
-	private String location;
 }

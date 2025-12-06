@@ -19,6 +19,6 @@ public class CustomerProfile {
 	@JoinColumn(name = "user_id")
 	private User user;
 
-	@Column(nullable = false)
+	@Column
 	private String location;
 }
