@@ -19,21 +19,21 @@ import java.util.List;
 @Transactional
 public class DataSeeder implements CommandLineRunner {
 
-	private final UserRepository userRepository;
+	private final UserRepository            userRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final CustomerProfileRepository customerProfileRepository;
-	private final ProductRepository productRepository;
-	private final PasswordEncoder passwordEncoder;
+	private final ProductRepository         productRepository;
+	private final PasswordEncoder           passwordEncoder;
 
 	@Override
-	public void run(String... args) throws Exception {
+	public void run (String... args) throws Exception {
 
 		// Cegah duplikasi seeder
-		if (userRepository.count() > 1) {
+		if ( userRepository.count() > 1 ) {
 			return;
 		}
 
-//customer x3
+		//customer x3
 		User c1 = createUser("customer1@mail.com", "cust1", "Customer One", UserRole.CUSTOMER);
 		User c2 = createUser("customer2@mail.com", "cust2", "Customer Two", UserRole.CUSTOMER);
 		User c3 = createUser("customer3@mail.com", "cust3", "Customer Three", UserRole.CUSTOMER);
@@ -41,10 +41,9 @@ public class DataSeeder implements CommandLineRunner {
 		customerProfileRepository.saveAll(List.of(
 				CustomerProfile.builder().user(c1).build(),
 				CustomerProfile.builder().user(c2).build(),
-				CustomerProfile.builder().user(c3).build()
-		));
+				CustomerProfile.builder().user(c3).build()));
 
-//	merchant x3
+		//	merchant x3
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
 		User m2 = createUser("merchant2@mail.com", "merch2", "Merchant Two", UserRole.MERCHANT);
 		User m3 = createUser("merchant3@mail.com", "merch3", "Merchant Three", UserRole.MERCHANT);
@@ -55,7 +54,7 @@ public class DataSeeder implements CommandLineRunner {
 
 		merchantProfileRepository.saveAll(List.of(mp1, mp2, mp3));
 
-//	user x3
+		//	user x3
 		createProductsForMerchant(mp1, "Vintage Shirt");
 		createProductsForMerchant(mp2, "Sneakers");
 		createProductsForMerchant(mp3, "Hoodie");
@@ -63,30 +62,30 @@ public class DataSeeder implements CommandLineRunner {
 		System.out.println("✅ Data seeder berhasil dijalankan!");
 	}
 
-	private User createUser(String email, String username, String name, UserRole role) {
+	private User createUser (String email, String username, String name, UserRole role) {
 		User user = User.builder()
-				.email(email)
-				.username(username)
-				.fullName(name)
-				.password(passwordEncoder.encode("password"))
-				.role(role)
-				.enabled(true)
-				.build();
+		                .email(email)
+		                .username(username)
+		                .fullName(name)
+		                .password(passwordEncoder.encode("password"))
+		                .role(role)
+		                .enabled(true)
+		                .build();
 		return userRepository.save(user);
 	}
 
-	private void createProductsForMerchant(MerchantProfile merchant, String baseName) {
-		for (int i = 1; i <= 5; i++) {
+	private void createProductsForMerchant (MerchantProfile merchant, String baseName) {
+		for ( int i = 1; i <= 5; i++ ) {
 			Product p = Product.builder()
-					.merchant(merchant)
-					.name(baseName + " " + i)
-					.description("Deskripsi produk " + baseName + " nomor " + i)
-					.price(BigDecimal.valueOf(50000 + (i * 10000)))
-					.category("fashion")
-					.color("random")
-					.isAvailable(true)
-					.condition(ProductCondition.USED)
-					.build();
+			                   .merchant(merchant)
+			                   .name(baseName + " " + i)
+			                   .description("Deskripsi produk " + baseName + " nomor " + i)
+			                   .price(BigDecimal.valueOf(50000 + ( i * 10000 )))
+			                   .category("fashion")
+			                   .color("random")
+			                   .isAvailable(true)
+			                   .condition(ProductCondition.USED)
+			                   .build();
 
 			productRepository.save(p);
 		}
