@@ -1,5 +1,6 @@
 package com.finpro.twogoods.entity;
 
+import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,4 +22,14 @@ public class CustomerProfile {
 
 	@Column
 	private String location;
+
+	public CustomerProfileResponse toResponse() {
+		return CustomerProfileResponse.builder()
+									  .role(getUser().getRole())
+									  .customerId(getId())
+									  .profilePicture(getUser().getProfilePicture())
+									  .email(getUser().getEmail())
+									  .fullName(getUser().getFullName())
+									  .build();
+	}
 }

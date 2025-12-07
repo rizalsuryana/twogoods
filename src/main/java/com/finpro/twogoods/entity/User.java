@@ -37,10 +37,10 @@ public class User extends BaseEntity implements UserDetails {
     @Column(nullable = false)
     private boolean enabled = true;
 
-	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "user")
 	private CustomerProfile customerProfile;
 
-	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "user")
 	private MerchantProfile merchantProfile;
 
     @Override

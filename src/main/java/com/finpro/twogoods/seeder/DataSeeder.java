@@ -69,7 +69,9 @@ public class DataSeeder implements CommandLineRunner {
 		System.out.println("✅ Data seeder berhasil dijalankan!");
 	}
 
-	private User createUser(String email, String username, String name, UserRole role) {
+	private User createUser(
+			String email, String username, String name, UserRole role
+						   ) {
 		User user = User.builder()
 						.email(email)
 						.username(username)

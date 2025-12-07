@@ -1,5 +1,6 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.service.CustomerProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
@@ -20,10 +21,11 @@ public class CustomerController {
 
 	@GetMapping( "/{id}" )
 	public ResponseEntity<?> getCustomerById (@PathVariable Long id) {
+		CustomerProfileResponse response = customerProfileService.getCustomerById(id).toResponse();
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				HttpStatus.OK.getReasonPhrase(),
-				customerProfileService.getCustomerById(id));
+				response);
 	}
 
 	@GetMapping
@@ -33,17 +35,19 @@ public class CustomerController {
 	                                         ) {
 		PageRequest pageRequest = PageRequest.of(page, size, getSort(sort));
 
-		Page<CustomerProfile> profiles = customerProfileService.getAllPaginated(pageRequest);
+		Page<CustomerProfileResponse> profiles =
+				customerProfileService.getAllPaginated(pageRequest).map(CustomerProfile::toResponse);
 
 		return ResponseUtil.buildPagedResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), profiles);
 	}
 
 	@PutMapping( path = "/{id}" )
 	public ResponseEntity<?> updateCustomer (@PathVariable Long id, @RequestBody CustomerProfile customerProfile) {
+		CustomerProfileResponse response = customerProfileService.updateCustomerProfile(id, customerProfile).toResponse();
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.CREATED,
 				HttpStatus.CREATED.getReasonPhrase(),
-				customerProfileService.updateCustomerProfile(id, customerProfile));
+				response);
 	}
 
 	@DeleteMapping( "/{id}" )

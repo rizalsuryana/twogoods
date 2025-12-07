@@ -1,6 +1,7 @@
 package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.dto.request.UserRequest;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
@@ -19,7 +20,7 @@ public class MerchantProfileService {
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final UserService userService;
 
-	public MerchantProfile getMerchantProfileById (Long id) {
+	public MerchantProfile getMerchantProfileById(Long id) {
 		return merchantProfileRepository.findMerchantProfileById(id)
 		                                .orElseThrow(() -> new ResourceNotFoundException("MerchantProfile not found!"));
 	}
@@ -33,8 +34,8 @@ public class MerchantProfileService {
 	}
 
 	@Transactional( rollbackFor = Exception.class )
-	public MerchantProfile updateMerchantProfile (MerchantProfile merchantProfile) {
-		MerchantProfile profile = getMerchantProfileById(merchantProfile.getId());
+	public MerchantProfile updateMerchantProfile (Long id, MerchantProfile merchantProfile) {
+		MerchantProfile profile = getMerchantProfileById(id);
 		UserRequest userRequest = UserRequest.builder()
 		                                     .profilePicture(merchantProfile.getUser().getProfilePicture())
 		                                     .email(merchantProfile.getUser().getEmail())

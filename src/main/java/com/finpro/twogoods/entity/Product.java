@@ -1,9 +1,11 @@
 package com.finpro.twogoods.entity;
 
 
+import com.finpro.twogoods.dto.response.ProductResponse;
 import com.finpro.twogoods.enums.ProductCondition;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -38,4 +40,18 @@ public class Product extends BaseEntity {
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProductImage> images;
 
+	public ProductResponse toResponse() {
+		return ProductResponse.builder()
+							  .id(getId())
+							  .category(getCategory())
+							  .merchantId(getMerchant().getId())
+							  .color(getColor())
+							  .condition(getCondition())
+							  .description(getDescription())
+							  .images(images.stream().map(ProductImage::toResponse).toList())
+							  .isAvailable(isAvailable)
+							  .price(getPrice())
+							  .name(getName())
+							  .build();
+	}
 }
