@@ -4,6 +4,7 @@ import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.Product;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.repository.CustomerProfileRepository;
@@ -90,7 +91,7 @@ public class DataSeeder implements CommandLineRunner {
 							   .name(baseName + " " + i)
 							   .description("Deskripsi produk " + baseName + " nomor " + i)
 							   .price(BigDecimal.valueOf(50000 + (i * 10000)))
-							   .category("fashion")
+							   .categories(List.of(Categories.Male, Categories.Shirt))
 							   .color("random")
 							   .isAvailable(true)
 							   .condition(ProductCondition.USED)

@@ -12,10 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,16 +32,7 @@ public class UserController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
 		User user = (User) authentication.getPrincipal();
-		UserResponse response = UserResponse.builder()
-											.id(user.getId())
-											.username(user.getUsername())
-											.fullName(user.getFullName())
-											.email(user.getEmail())
-											.profilePicture(user.getProfilePicture())
-											.role(user.getRole().getRoleName())
-											.customerProfile(user.getCustomerProfile())
-											.merchantProfile(user.getMerchantProfile())
-											.build();
+		UserResponse response = user.toResponse();
 
 		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), response);
 	}
@@ -59,5 +48,19 @@ public class UserController {
 			@RequestParam(required = false) String search
 																	  ) {
 		return ResponseEntity.ok(userService.getAllUsers(page, size, role, search));
+	}
+
+	@PutMapping("/profile-picture")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> uploadProfilePicture(
+			@RequestParam("file") MultipartFile file
+												 ) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		User user = (User) authentication.getPrincipal();
+
+		User updated = userService.updateProfilePicture(user.getId(), file);
+
+		return ResponseEntity.ok(updated.toResponse());
 	}
 }

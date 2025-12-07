@@ -2,6 +2,7 @@ package com.finpro.twogoods.entity;
 
 
 import com.finpro.twogoods.dto.response.ProductResponse;
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +29,14 @@ public class Product extends BaseEntity {
 
 	private BigDecimal price;
 
-	private String category;
+	@ElementCollection(targetClass =Categories.class)
+	@Enumerated(EnumType.STRING)
+	@CollectionTable(
+			name = "product_categories",
+			joinColumns = @JoinColumn(name = "product_id")
+	)
+	@Column(name = "categories")
+	private List<Categories> categories;
 
 	private String color;
 
@@ -43,7 +51,7 @@ public class Product extends BaseEntity {
 	public ProductResponse toResponse() {
 		return ProductResponse.builder()
 							  .id(getId())
-							  .category(getCategory())
+							  .categories(getCategories())
 							  .merchantId(getMerchant().getId())
 							  .color(getColor())
 							  .condition(getCondition())
