@@ -32,6 +32,7 @@ public class TransactionController {
 		return ResponseEntity.ok(transactionService.getMerchantOrders());
 	}
 
+//	buat update status nanti di tambahin yang di enum /status?status=PAID etc
 	@PutMapping("/{id}/status")
 	public ResponseEntity<TransactionResponse> updateStatus(
 			@PathVariable Long id,

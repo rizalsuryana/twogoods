@@ -149,6 +149,7 @@ public class UserService implements UserDetailsService {
 //		String imageUrl = cloudinaryService.uploadImage(file);
 		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
 
+
 		user.setProfilePicture(imageUrl);
 
 		return userRepository.save(user);
