@@ -13,21 +13,22 @@ import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceDuplicateException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
+import com.finpro.twogoods.helper.FilterHelper;
+import com.finpro.twogoods.helper.PaginationHelper;
+import com.finpro.twogoods.mapper.UserMapper;
 import com.finpro.twogoods.repository.CustomerProfileRepository;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.data.domain.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 
 import java.util.List;
 
@@ -43,17 +44,13 @@ public class UserService implements UserDetailsService {
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final CloudinaryService cloudinaryService;
 
-//auth spring
-
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		log.debug("Loading user by email: {}", email);
 		return userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
-
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional
 	public User createCustomer(CustomerRegisterRequest request) {
 
 		String username = validateUserOnRegister(
@@ -73,18 +70,14 @@ public class UserService implements UserDetailsService {
 
 		userRepository.save(user);
 
-		CustomerProfile profile = CustomerProfile.builder()
-				.user(user)
-				.build();
-
-		customerProfileRepository.save(profile);
+		customerProfileRepository.save(
+				CustomerProfile.builder().user(user).build()
+		);
 
 		return user;
 	}
 
-//register merchant
-
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional
 	public User createMerchant(MerchantRegisterRequest request) {
 
 		String username = validateUserOnRegister(
@@ -104,37 +97,28 @@ public class UserService implements UserDetailsService {
 
 		userRepository.save(user);
 
-		MerchantProfile profile = MerchantProfile.builder()
-				.user(user)
-				.location(request.getLocation())
-				.NIK(request.getNik())
-				.rating(0)
-				.build();
-
-		merchantProfileRepository.save(profile);
+		merchantProfileRepository.save(
+				MerchantProfile.builder()
+						.user(user)
+						.location(request.getLocation())
+						.NIK(request.getNik())
+						.rating(0)
+						.build()
+		);
 
 		return user;
 	}
 
-//crud user
-
-	public User getUserById(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found!"));
-	}
-
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional
 	public User updateUser(Long id, UserRequest request) {
 		User user = getUserById(id);
 
-		// duplikat email validasi
 		if (request.getEmail() != null && !request.getEmail().isBlank()) {
 			if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
 				throw new ResourceDuplicateException("Email already exists");
 			}
 			user.setEmail(request.getEmail());
 		}
-
 
 		if (request.getUsername() != null && !request.getUsername().isBlank()) {
 			if (userRepository.existsByUsernameAndIdNot(request.getUsername(), id)) {
@@ -143,17 +127,14 @@ public class UserService implements UserDetailsService {
 			user.setUsername(request.getUsername());
 		}
 
-		// full nama
 		if (request.getFullName() != null && !request.getFullName().isBlank()) {
 			user.setFullName(request.getFullName());
 		}
 
-		//  UPDATE PASSWORD (HANYA JIKA DIISI)
 		if (request.getPassword() != null && !request.getPassword().isBlank()) {
 			user.setPassword(passwordEncoder.encode(request.getPassword()));
 		}
 
-		// profilePicture,
 		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
 			user.setProfilePicture(request.getProfilePicture());
 		}
@@ -162,31 +143,6 @@ public class UserService implements UserDetailsService {
 	}
 
 	@Transactional
-	public void updateExistingUser(User user, UserRequest request) {
-		// Method ni bisa dipake kalo mau inject User yang sudah di-load di tempat lain
-		if (request.getFullName() != null && !request.getFullName().isBlank()) {
-			user.setFullName(request.getFullName());
-		}
-
-		if (request.getEmail() != null && !request.getEmail().isBlank()) {
-			user.setEmail(request.getEmail());
-		}
-
-		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
-			user.setProfilePicture(request.getProfilePicture());
-		}
-
-		if (request.getPassword() != null && !request.getPassword().isBlank()) {
-			user.setPassword(passwordEncoder.encode(request.getPassword()));
-		}
-	}
-
-	public List<User> getAllUsersByRole(UserRole role) {
-		return userRepository.findAllByRole(role);
-	}
-
-
-	@Transactional(rollbackFor = Exception.class)
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
@@ -198,105 +154,61 @@ public class UserService implements UserDetailsService {
 
 	public ApiResponse<List<UserResponse>> getAllUsers(int page, int size, String role, String search) {
 
-		List<User> allUsers = userRepository.findAll();
+		Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
-		// FILTER BY ROLE
-		if (role != null && !role.isEmpty()) {
-			allUsers = allUsers.stream()
-					.filter(u -> u.getRole() != null &&
-							u.getRole().getRoleName().equalsIgnoreCase(role))
-					.toList();
-		}
+		Page<User> usersPage = userRepository.findAll(pageable);
 
-		// SEARCH BY NAME OR EMAIL
-		if (search != null && !search.isEmpty()) {
-			String keyword = search.toLowerCase();
-			allUsers = allUsers.stream()
-					.filter(u ->
-							(u.getFullName() != null &&
-									u.getFullName().toLowerCase().contains(keyword))
-									||
-									(u.getEmail() != null &&
-											u.getEmail().toLowerCase().contains(keyword))
-					)
-					.toList();
-		}
+		List<User> filtered = usersPage.getContent();
 
-		int totalRows = allUsers.size();
+		filtered = FilterHelper.filterByRole(filtered, role);
+		filtered = FilterHelper.searchUsers(filtered, search);
 
-		// PAGINATION MANUAL
-		int start = page * size;
-		int end = Math.min(start + size, totalRows);
-
-		List<User> paginatedUsers = (start < end) ? allUsers.subList(start, end) : List.of();
-
-		List<UserResponse> userResponses = paginatedUsers.stream()
-				.map(user -> UserResponse.builder()
-						.id(user.getId())
-						.username(user.getUsername())
-						.email(user.getEmail())
-						.fullName(user.getFullName())
-						.role(user.getRole())
-						.profilePicture(user.getProfilePicture())
-						.build())
+		List<UserResponse> responses = filtered.stream()
+				.map(UserMapper::toFull)
 				.toList();
 
-		int totalPages = (int) Math.ceil((double) totalRows / size);
-
-		PagingResponse paging = PagingResponse.builder()
-				.page(page)
-				.rowsPerPage(size)
-				.totalRows((long) totalRows)
-				.totalPages(totalPages)
-				.hasNext(page + 1 < totalPages)
-				.hasPrevious(page > 0)
-				.build();
+		PagingResponse paging = PaginationHelper.fromPage(usersPage);
 
 		return ApiResponse.<List<UserResponse>>builder()
 				.status(new StatusResponse(200, "Users fetched successfully"))
-				.data(userResponses)
+				.data(responses)
 				.paging(paging)
 				.build();
 	}
 
+	public UserResponse getMe() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		User principal = (User) auth.getPrincipal();
+
+		User user = userRepository.findById(principal.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+		return UserMapper.toFull(user);
+	}
 
 	private String validateUserOnRegister(String password, String confirmPassword, String email) {
 
-		// PASSWORD MATCH
 		if (!password.equals(confirmPassword)) {
 			throw new IllegalArgumentException("Password and confirm password do not match");
 		}
 
-		// EMAIL DUPLICATE
 		if (userRepository.existsByEmail(email)) {
 			throw new ResourceDuplicateException("Email already exists");
 		}
 
-		// GENERATE USERNAME FROM EMAIL + ENSURE UNIQUE
 		String username = email.split("@")[0];
 		int counter = 1;
-		String originalUsername = username;
+		String original = username;
 
 		while (userRepository.existsByUsername(username)) {
-			username = originalUsername + counter++;
+			username = original + counter++;
 		}
 
 		return username;
 	}
 
-
-//	get me
-@Transactional(readOnly = true)
-public UserResponse getMe() {
-	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-	User principal = (User) auth.getPrincipal();
-
-	// Load ulang user dari DB supaya Hibernate session aktif
-	User user = userRepository.findById(principal.getId())
-			.orElseThrow(() -> new RuntimeException("User not found"));
-
-	return user.toResponse();
-}
-
-
+	public User getUserById(Long id) {
+		return userRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
 }
