@@ -13,8 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ProductRequest {
-	// merchant pemilik produk
-	private Long merchantId;
 
 	private String name;
 
