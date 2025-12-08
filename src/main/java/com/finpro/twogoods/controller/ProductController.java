@@ -21,7 +21,8 @@ public class ProductController {
 
 	private final ProductService productService;
 
-	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MERCHANT')")
+//			"and @productService.isOwner(#id))")
 	@PostMapping
 	public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
 		return ResponseEntity.ok(productService.createProduct(request));
