@@ -25,28 +25,20 @@ public class UserController {
 
 	private final UserService userService;
 
-	// /me (ambil user dari token)
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping("/me")
 	public ResponseEntity<?> getMe() {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-		User user = (User) authentication.getPrincipal();
-		UserResponse response = user.toResponse();
-
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), response);
+		UserResponse response = userService.getMe();
+		return ResponseUtil.buildSingleResponse(HttpStatus.OK, "OK", response);
 	}
 
-	// GET /users (pagination + filter + search)
-	// Contoh: /api/v1/users?page=0&size=10&role=ROLE_MERCHANT&search=rizal
-//	@PreAuthorize( "hasRole('ADMIN')" )
 	@GetMapping
 	public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(required = false) String role,
 			@RequestParam(required = false) String search
-																	  ) {
+	) {
 		return ResponseEntity.ok(userService.getAllUsers(page, size, role, search));
 	}
 
@@ -54,9 +46,8 @@ public class UserController {
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> uploadProfilePicture(
 			@RequestParam("file") MultipartFile file
-												 ) {
+	) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
 		User user = (User) authentication.getPrincipal();
 
 		User updated = userService.updateProfilePicture(user.getId(), file);

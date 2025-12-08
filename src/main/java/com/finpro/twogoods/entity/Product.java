@@ -1,9 +1,9 @@
 package com.finpro.twogoods.entity;
 
-
 import com.finpro.twogoods.dto.response.ProductResponse;
 import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +20,7 @@ public class Product extends BaseEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "merchant_id", nullable = false)
+	@JsonBackReference
 	private MerchantProfile merchant;
 
 	private String name;
@@ -29,7 +30,7 @@ public class Product extends BaseEntity {
 
 	private BigDecimal price;
 
-	@ElementCollection(targetClass =Categories.class)
+	@ElementCollection(targetClass = Categories.class)
 	@Enumerated(EnumType.STRING)
 	@CollectionTable(
 			name = "product_categories",
@@ -50,16 +51,18 @@ public class Product extends BaseEntity {
 
 	public ProductResponse toResponse() {
 		return ProductResponse.builder()
-							  .id(getId())
-							  .categories(getCategories())
-							  .merchantId(getMerchant().getId())
-							  .color(getColor())
-							  .condition(getCondition())
-							  .description(getDescription())
-							  .images(images.stream().map(ProductImage::toResponse).toList())
-							  .isAvailable(isAvailable)
-							  .price(getPrice())
-							  .name(getName())
-							  .build();
+				.id(getId())
+				.merchantId(merchant != null ? merchant.getId() : null)
+				.name(name)
+				.description(description)
+				.price(price)
+				.categories(categories)
+				.color(color)
+				.isAvailable(isAvailable)
+				.condition(condition)
+				.images(images == null
+						? null
+						: images.stream().map(ProductImage::toResponse).toList())
+				.build();
 	}
 }
