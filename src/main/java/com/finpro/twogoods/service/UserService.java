@@ -135,9 +135,9 @@ public class UserService implements UserDetailsService {
 			user.setPassword(passwordEncoder.encode(request.getPassword()));
 		}
 
-		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
-			user.setProfilePicture(request.getProfilePicture());
-		}
+//		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
+//			user.setProfilePicture(request.getProfilePicture());
+//		}
 
 		return userRepository.save(user);
 	}
@@ -146,7 +146,9 @@ public class UserService implements UserDetailsService {
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
-		String imageUrl = cloudinaryService.uploadImage(file);
+//		String imageUrl = cloudinaryService.uploadImage(file);
+		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
+
 		user.setProfilePicture(imageUrl);
 
 		return userRepository.save(user);

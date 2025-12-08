@@ -126,7 +126,8 @@ public class ProductService {
 
 		Product product = productRepository.findById(productId)
 				.orElseThrow(() -> new RuntimeException("Product not found"));
-		String imageUrl = cloudinaryService.uploadImage(file);
+//		String imageUrl = cloudinaryService.uploadImage(file);
+		String imageUrl = cloudinaryService.uploadImage(file, "products");
 		ProductImage image = ProductImage.builder()
 				.product(product)
 				.imageUrl(imageUrl)
@@ -177,6 +178,36 @@ public class ProductService {
 
 		return result.map(this::toProductResponse);
 	}
+
+//	Delete
+public void deleteProductImage(Long imageId) {
+
+	ProductImage image = productImageRepository.findById(imageId)
+			.orElseThrow(() -> new RuntimeException("Image not found"));
+
+	// Optional: hapus dari Cloudinary kalau kamu mau
+	// cloudinaryService.deleteImage(image.getImageUrl());
+
+	productImageRepository.delete(image);
+}
+
+	public boolean isOwnerByImage(Long imageId) {
+	User user = (User) SecurityContextHolder.getContext()
+			.getAuthentication()
+			.getPrincipal();
+
+	ProductImage image = productImageRepository.findById(imageId)
+			.orElse(null);
+
+	if (image == null) return false;
+
+	Long merchantUserId = image.getProduct().getMerchant().getUser().getId();
+
+	return merchantUserId.equals(user.getId());
+}
+
+
+
 
 	//  MAPPER
 	private ProductResponse toProductResponse(Product product) {

@@ -86,4 +86,13 @@ public class ProductController {
 		return ResponseEntity.ok(productService.getAvailableProducts(page, size));
 	}
 
+	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwnerByImage(#imageId))")
+	@DeleteMapping("/images/{imageId}")
+	public ResponseEntity<Void> deleteProductImage(@PathVariable Long imageId) {
+		productService.deleteProductImage(imageId);
+		return ResponseEntity.noContent().build();
+	}
+
+
+
 }
