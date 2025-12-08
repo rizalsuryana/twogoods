@@ -36,6 +36,8 @@ public class MerchantProfile {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;
 
+
+
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
 				.id(id)
