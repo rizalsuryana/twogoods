@@ -166,8 +166,12 @@ public class UserService implements UserDetailsService {
 		filtered = FilterHelper.filterByRole(filtered, role);
 		filtered = FilterHelper.searchUsers(filtered, search);
 
+//		List<UserResponse> responses = filtered.stream()
+//				.map(UserMapper::toFull)
+//				.toList();
+
 		List<UserResponse> responses = filtered.stream()
-				.map(UserMapper::toFull)
+				.map(User::toResponse)
 				.toList();
 
 		PagingResponse paging = PaginationHelper.fromPage(usersPage);

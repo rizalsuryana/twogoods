@@ -11,11 +11,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductImage {
+public class ProductImage extends BaseEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 
 	private String imageUrl;
 
@@ -26,7 +23,7 @@ public class ProductImage {
 
 	public ProductImageResponse toResponse() {
 		return ProductImageResponse.builder()
-				.id(id)
+				.id(getId())
 				.imageUrl(imageUrl)
 				.build();
 	}
