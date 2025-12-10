@@ -3,12 +3,13 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.client.MidtransFeignClient;
 import com.finpro.twogoods.client.dto.MidtransSnapRequest;
 import com.finpro.twogoods.client.dto.MidtransSnapResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-@Req
+@RequiredArgsConstructor
 public class MidtransService {
 
 	private final MidtransFeignClient midtransFeignClient;
