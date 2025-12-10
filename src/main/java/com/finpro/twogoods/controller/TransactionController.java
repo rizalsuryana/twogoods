@@ -21,33 +21,43 @@ public class TransactionController {
 	private final TransactionService transactionService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<TransactionResponse>> create(@RequestBody CreateTransactionRequest request) {
-		return ResponseUtil.buildSingleResponse(HttpStatus.CREATED,
-				HttpStatus.OK.getReasonPhrase(), transactionService.createTransaction(request));
+	public ResponseEntity<ApiResponse<TransactionResponse>> create(
+			@RequestBody CreateTransactionRequest request
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.CREATED,
+				"Transaction created successfully",
+				transactionService.createTransaction(request)
+		);
 	}
 
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<List<TransactionResponse>>> myTransactions() {
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(),
-				transactionService.getMyTransactions());
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"My transactions fetched successfully",
+				transactionService.getMyTransactions()
+		);
 	}
 
 	@GetMapping("/merchant")
 	public ResponseEntity<ApiResponse<List<TransactionResponse>>> merchantOrders() {
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(),
-				transactionService.getMerchantOrders());
-
-//				ResponseEntity.ok(transactionService.getMerchantOrders());
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Merchant orders fetched successfully",
+				transactionService.getMerchantOrders()
+		);
 	}
 
-//	buat update status nanti di tambahin yang di enum /status?status=PAID etc
 	@PutMapping("/{id}/status")
 	public ResponseEntity<ApiResponse<TransactionResponse>> updateStatus(
 			@PathVariable Long id,
 			@RequestParam OrderStatus status
 	) {
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(),
-				transactionService.updateStatus(id, status));
-//				ResponseEntity.ok(transactionService.updateStatus(id, status));
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Transaction status updated successfully",
+				transactionService.updateStatus(id, status)
+		);
 	}
 }

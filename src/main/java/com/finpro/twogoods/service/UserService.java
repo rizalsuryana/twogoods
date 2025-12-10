@@ -46,7 +46,7 @@ public class UserService implements UserDetailsService {
 				.orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User createCustomer(CustomerRegisterRequest request) {
 
 		String username = validateUserOnRegister(
@@ -73,7 +73,7 @@ public class UserService implements UserDetailsService {
 		return user;
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User createMerchant(MerchantRegisterRequest request) {
 
 		String username = validateUserOnRegister(
@@ -105,7 +105,7 @@ public class UserService implements UserDetailsService {
 		return user;
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User updateUser(Long id, UserRequest request) {
 		User user = getUserById(id);
 
@@ -134,7 +134,7 @@ public class UserService implements UserDetailsService {
 		return userRepository.save(user);
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
@@ -145,7 +145,7 @@ public class UserService implements UserDetailsService {
 		return userRepository.save(user);
 	}
 
-	// ✅ FINAL VERSION: return Page<UserResponse>
+
 	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());

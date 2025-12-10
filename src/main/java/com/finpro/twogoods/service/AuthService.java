@@ -6,6 +6,7 @@ import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.response.LoginResponse;
 import com.finpro.twogoods.dto.response.RegisterResponse;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import com.finpro.twogoods.enums.UserRole;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -24,6 +25,7 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final UserService userService;
 
+	@Transactional(readOnly = true)
 	public LoginResponse login(LoginRequest request) {
 
 		Authentication authentication = authenticationManager.authenticate(
@@ -36,7 +38,6 @@ public class AuthService {
 		User user = (User) authentication.getPrincipal();
 		String token = jwtTokenProvider.generateToken(user);
 
-		// ambil location dari profile (customer/merchant)
 		String location = null;
 		if (user.getRole() == UserRole.CUSTOMER && user.getCustomerProfile() != null) {
 			location = user.getCustomerProfile().getLocation();
@@ -61,8 +62,7 @@ public class AuthService {
 				.build();
 	}
 
-
-	// REGISTER CUSTOMER
+	@Transactional(rollbackFor = Exception.class)
 	public RegisterResponse registerCustomer(CustomerRegisterRequest request) {
 		log.info("Attempting to register CUSTOMER with email: {}", request.getEmail());
 
@@ -76,8 +76,7 @@ public class AuthService {
 				.build();
 	}
 
-
-// REGISTER MERCHANT
+	@Transactional(rollbackFor = Exception.class)
 	public RegisterResponse registerMerchant(MerchantRegisterRequest request) {
 		log.info("Attempting to register MERCHANT with email: {}", request.getEmail());
 

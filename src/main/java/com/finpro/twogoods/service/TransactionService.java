@@ -10,6 +10,7 @@ import com.finpro.twogoods.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,14 +23,13 @@ public class TransactionService {
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 
-	//  CREATE TRANSACTION
+	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse createTransaction(CreateTransactionRequest request) {
 
 		User currentUser = (User) SecurityContextHolder.getContext()
 				.getAuthentication()
 				.getPrincipal();
 
-		//  Only CUSTOMER can create transactions
 		if (!currentUser.getRole().equals(UserRole.CUSTOMER)) {
 			throw new ApiException("Only customers can create transactions");
 		}
@@ -39,7 +39,6 @@ public class TransactionService {
 
 		MerchantProfile merchant = product.getMerchant();
 
-		//  Merchant cannot buy their own product
 		if (merchant.getUser().getId().equals(currentUser.getId())) {
 			throw new ApiException("Merchant cannot buy their own product");
 		}
@@ -64,7 +63,7 @@ public class TransactionService {
 		return savedTransaction.toResponse();
 	}
 
-	//  CUSTOMER TRANSACTIONS
+	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMyTransactions() {
 		User customer = (User) SecurityContextHolder.getContext()
 				.getAuthentication()
@@ -76,7 +75,7 @@ public class TransactionService {
 				.toList();
 	}
 
-	//  MERCHANT ORDERS
+	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMerchantOrders() {
 		User merchantUser = (User) SecurityContextHolder.getContext()
 				.getAuthentication()
@@ -91,7 +90,7 @@ public class TransactionService {
 				.toList();
 	}
 
-	//  UPDATE STATUS
+	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse updateStatus(Long id, OrderStatus newStatus) {
 
 		User currentUser = (User) SecurityContextHolder.getContext()
@@ -131,7 +130,6 @@ public class TransactionService {
 				break;
 
 			case CANCELED:
-				//  Both customer & merchant can cancel
 				if (currentStatus == OrderStatus.SHIPPED || currentStatus == OrderStatus.COMPLETED) {
 					throw new ApiException("Cannot cancel after item is shipped");
 				}

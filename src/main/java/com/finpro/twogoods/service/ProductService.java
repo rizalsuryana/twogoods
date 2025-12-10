@@ -8,6 +8,7 @@ import com.finpro.twogoods.entity.Product;
 import com.finpro.twogoods.entity.ProductImage;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.Categories;
+import com.finpro.twogoods.enums.ProductCondition;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
@@ -15,13 +16,16 @@ import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +38,7 @@ public class ProductService {
 	private final ProductImageRepository productImageRepository;
 	private final CloudinaryService cloudinaryService;
 
-	//  CREATE PRODUCT — hanya MERCHANT
+	// CREATE PRODUCT
 	@Transactional(rollbackFor = Exception.class)
 	public ProductResponse createProduct(ProductRequest request) {
 
@@ -54,14 +58,14 @@ public class ProductService {
 				.price(request.getPrice())
 				.categories(request.getCategories())
 				.color(request.getColor())
-				.isAvailable(request.getIsAvailable() != null && request.getIsAvailable())
+				.isAvailable(Boolean.TRUE.equals(request.getIsAvailable()))
 				.condition(request.getCondition())
 				.build();
 
 		return productRepository.save(product).toResponse();
 	}
 
-	//  GET PRODUCT BY ID
+	// GET PRODUCT BY ID
 	@Transactional(readOnly = true)
 	public ProductResponse getProductById(Long id) {
 		Product product = productRepository.findById(id)
@@ -69,26 +73,92 @@ public class ProductService {
 		return product.toResponse();
 	}
 
-	//  GET ALL PRODUCTS (search + filter + paging)
+	// GET PRODUCTS WITH FILTER (multi-category + multi-keyword search)
 	@Transactional(readOnly = true)
-	public Page<ProductResponse> getProducts(int page, int size, String search, Categories category) {
+	public Page<ProductResponse> getProducts(
+			int page,
+			int size,
+			String search,
+			List<Categories> categories,
+			BigDecimal minPrice,
+			BigDecimal maxPrice,
+			ProductCondition condition,
+			Boolean isAvailable,
+			String sort
+	) {
 
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-		Page<Product> result;
-
-		if (search != null && !search.isBlank()) {
-			result = productRepository.findByNameContainingIgnoreCase(search, pageable);
-		} else if (category != null) {
-			result = productRepository.findByCategoriesContaining(category, pageable);
-		} else {
-			result = productRepository.findAll(pageable);
+		// Normalisasi sort: handle null, "null", dan kosong
+		if (sort == null || "null".equalsIgnoreCase(sort) || sort.isBlank()) {
+			sort = "newest";
 		}
+
+		Pageable pageable = switch (sort) {
+			case "price_asc" -> PageRequest.of(page, size, Sort.by("price").ascending());
+			case "price_desc" -> PageRequest.of(page, size, Sort.by("price").descending());
+			default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
+		};
+
+		// AND chaining untuk semua filter
+		Specification<Product> spec = Specification.allOf();
+
+		// MULTI-KEYWORD SEARCH: "hoodie vintage black"
+		if (search != null && !search.isBlank()) {
+			String[] keywords = search.trim().toLowerCase().split("\\s+");
+
+			spec = spec.and((root, query, cb) -> {
+				var namePath = cb.lower(cb.coalesce(root.get("name"), ""));
+				List<Predicate> predicates = new ArrayList<>();
+
+				for (String keyword : keywords) {
+					predicates.add(cb.like(namePath, "%" + keyword + "%"));
+				}
+
+				// Semua keyword harus match (AND)
+				return cb.and(predicates.toArray(Predicate[]::new));
+			});
+		}
+
+		// MULTI-CATEGORY FILTER (OR): categories=Male,Shirt
+		if (categories != null && !categories.isEmpty()) {
+			spec = spec.and((root, query, cb) -> {
+				var join = root.join("categories"); // JOIN ke element collection
+				List<Predicate> predicates = new ArrayList<>();
+
+				for (Categories cat : categories) {
+					predicates.add(cb.equal(join, cat));
+				}
+
+				return cb.or(predicates.toArray(Predicate[]::new));
+			});
+		}
+
+
+		if (minPrice != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+		}
+
+		if (maxPrice != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+		}
+
+		if (condition != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.equal(root.get("condition"), condition));
+		}
+
+		if (isAvailable != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.equal(root.get("isAvailable"), isAvailable));
+		}
+
+		Page<Product> result = productRepository.findAll(spec, pageable);
 
 		return result.map(Product::toResponse);
 	}
 
-	//  UPDATE PRODUCT — hanya owner
+	// UPDATE PRODUCT
 	@Transactional(rollbackFor = Exception.class)
 	public ProductResponse updateProduct(Long id, ProductRequest request) {
 
@@ -110,7 +180,7 @@ public class ProductService {
 		return productRepository.save(product).toResponse();
 	}
 
-	//  DELETE PRODUCT — hanya owner
+	// DELETE PRODUCT
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteProduct(Long id) {
 
@@ -124,7 +194,7 @@ public class ProductService {
 		productRepository.delete(product);
 	}
 
-	//  UPLOAD IMAGE — hanya owner
+	// UPLOAD IMAGE
 	@Transactional(rollbackFor = Exception.class)
 	public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) throws IOException {
 
@@ -147,52 +217,7 @@ public class ProductService {
 		return saved.toResponse();
 	}
 
-	//  GET PRODUCTS BY MERCHANT
-	@Transactional(readOnly = true)
-	public Page<ProductResponse> getProductsByMerchant(Long merchantId, int page, int size) {
-
-		MerchantProfile merchant = merchantProfileRepository.findById(merchantId)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
-
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-		return productRepository.findByMerchant(merchant, pageable)
-				.map(Product::toResponse);
-	}
-
-	//  GET AVAILABLE PRODUCTS
-	@Transactional(readOnly = true)
-	public Page<ProductResponse> getAvailableProducts(int page, int size) {
-
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-		return productRepository.findByIsAvailableTrue(pageable)
-				.map(Product::toResponse);
-	}
-
-	//  DELETE PRODUCT IMAGE
-	@Transactional(rollbackFor = Exception.class)
-	public void deleteProductImage(Long imageId) {
-
-		ProductImage image = productImageRepository.findById(imageId)
-				.orElseThrow(() -> new ResourceNotFoundException("Image not found"));
-
-		productImageRepository.delete(image);
-	}
-
-	//  CHECK OWNER BY IMAGE
-	@Transactional(readOnly = true)
-	public boolean isOwnerByImage(Long imageId) {
-
-		User user = getCurrentUser();
-
-		ProductImage image = productImageRepository.findById(imageId).orElse(null);
-		if (image == null) return false;
-
-		return image.getProduct().getMerchant().getUser().getId().equals(user.getId());
-	}
-
-	//  UPLOAD MULTIPLE IMAGES
+	// UPLOAD MULTIPLE IMAGES
 	@Transactional(rollbackFor = Exception.class)
 	public List<ProductImageResponse> uploadMultipleImages(Long productId, MultipartFile[] files) throws IOException {
 
@@ -222,14 +247,17 @@ public class ProductService {
 		return responses;
 	}
 
-	//  Helper: get current user
-	private User getCurrentUser() {
-		return (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+	// DELETE IMAGE
+	@Transactional(rollbackFor = Exception.class)
+	public void deleteProductImage(Long imageId) {
+
+		ProductImage image = productImageRepository.findById(imageId)
+				.orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+
+		productImageRepository.delete(image);
 	}
 
-	//  Helper: check owner
+	// OWNER CHECK
 	@Transactional(readOnly = true)
 	public boolean isOwner(Long productId) {
 
@@ -240,5 +268,10 @@ public class ProductService {
 
 		return product.getMerchant().getUser().getId().equals(user.getId());
 	}
-}
 
+	private User getCurrentUser() {
+		return (User) SecurityContextHolder.getContext()
+				.getAuthentication()
+				.getPrincipal();
+	}
+}
