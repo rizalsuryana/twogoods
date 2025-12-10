@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -21,7 +22,8 @@ public class ProductController {
 
 	private final ProductService productService;
 
-	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MERCHANT')")
+//			"and @productService.isOwner(#id))")
 	@PostMapping
 	public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
 		return ResponseEntity.ok(productService.createProduct(request));
@@ -58,7 +60,7 @@ public class ProductController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
+	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#productId))")
 	@PostMapping("/{productId}/upload-image")
 	public ResponseEntity<ProductImageResponse> uploadProductImage(
 			@PathVariable Long productId,
@@ -83,6 +85,22 @@ public class ProductController {
 			@RequestParam(defaultValue = "10") int size
 	) {
 		return ResponseEntity.ok(productService.getAvailableProducts(page, size));
+	}
+
+	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwnerByImage(#imageId))")
+	@DeleteMapping("/images/{imageId}")
+	public ResponseEntity<Void> deleteProductImage(@PathVariable Long imageId) {
+		productService.deleteProductImage(imageId);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#productId))")
+	@PostMapping("/{productId}/upload-multi-images")
+	public ResponseEntity<List<ProductImageResponse>> uploadMultipleImages(
+			@PathVariable Long productId,
+			@RequestParam("files") MultipartFile[] files
+	) throws IOException {
+		return ResponseEntity.ok(productService.uploadMultipleImages(productId, files));
 	}
 
 }

@@ -1,60 +1,84 @@
 package com.finpro.twogoods.controller;
 
-import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.MerchantProfileService;
-import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/v1/merchant")
+@RequestMapping("/api/v1/merchant-profiles")
 @RequiredArgsConstructor
 public class MerchantProfileController {
 
 	private final MerchantProfileService merchantProfileService;
 
 	@GetMapping
-	public ResponseEntity<?> getAllMerchants(
+	public ResponseEntity<Page<MerchantProfile>> getAllPaginated(
 			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id,asc") String[] sort
-											) {
-		PageRequest pageRequest = PageRequest.of(page, size, getSort(sort));
+			@RequestParam(defaultValue = "10") int size
+	) {
+		Page<MerchantProfile> profiles =
+				merchantProfileService.getAllPaginated(PageRequest.of(page, size));
 
-		Page<MerchantProfileResponse> profiles =
-				merchantProfileService.getMerchantProfiles(pageRequest).map(MerchantProfile::toResponse);
-
-		return ResponseUtil.buildPagedResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), profiles);
+		return ResponseEntity.ok(profiles);
 	}
 
-	private Sort getSort(String[] sort) {
-		String field = sort[0];
-		String direction = sort.length > 1 ? sort[1] : "asc";
-
-		return direction.equalsIgnoreCase("desc") ? Sort.by(field).descending() : Sort.by(field).ascending();
+	@GetMapping("/all")
+	public ResponseEntity<List<MerchantProfile>> getAll() {
+		return ResponseEntity.ok(merchantProfileService.getAllMerchantProfiles());
 	}
 
-	@GetMapping(path = "/{id}")
-	public ResponseEntity<?> getMerchantProfileById(@PathVariable Long id) {
-		MerchantProfileResponse response = merchantProfileService.getMerchantProfileById(id).toResponse();
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), response);
+	@GetMapping("/{id}")
+	public ResponseEntity<MerchantProfile> getById(@PathVariable Long id) {
+		return ResponseEntity.ok(merchantProfileService.getMerchantById(id));
 	}
 
-	@PutMapping(path = "/{id}")
-	public ResponseEntity<?> updateMerchant (@PathVariable Long id, @RequestBody MerchantProfile merchant) {
-		MerchantProfileResponse response = merchantProfileService.updateMerchantProfile(id, merchant).toResponse();
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), response);
+	@PutMapping("/{id}")
+	public ResponseEntity<MerchantProfile> update(
+			@PathVariable Long id,
+			@RequestBody MerchantProfile merchantProfile,
+			Authentication auth
+	) {
+		User user = (User) auth.getPrincipal();
+
+		// hanya MERCHANT yang boleh update merchant profile
+		if (!user.getRole().name().equals("MERCHANT")) {
+			throw new AccessDeniedException("Only MERCHANT can update merchant profile");
+		}
+
+		// hanya boleh update profile miliknya sendiri
+		if (!user.getId().equals(id)) {
+			throw new AccessDeniedException("You can only update your own merchant profile");
+		}
+
+		return ResponseEntity.ok(
+				merchantProfileService.updateMerchantProfile(id, merchantProfile)
+		);
 	}
 
-	@DeleteMapping(path = "/{id}")
-	public ResponseEntity<?> deleteMerchant (@PathVariable Long id) {
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth) {
+		User user = (User) auth.getPrincipal();
+
+		// hanya MERCHANT yang boleh delete merchant profile
+		if (!user.getRole().name().equals("MERCHANT")) {
+			throw new AccessDeniedException("Only MERCHANT can delete merchant profile");
+		}
+
+		// hanya boleh delete profile miliknya sendiri
+		if (!user.getId().equals(id)) {
+			throw new AccessDeniedException("You can only delete your own merchant profile");
+		}
+
 		merchantProfileService.deleteMerchantProfileById(id);
-		return ResponseUtil.buildSingleResponse(HttpStatus.OK, HttpStatus.OK.getReasonPhrase(), null);
+		return ResponseEntity.noContent().build();
 	}
 }

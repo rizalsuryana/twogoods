@@ -20,4 +20,6 @@ public class UserRequest {
 
 	@NotBlank
 	private String profilePicture;
+
+	private String username;
 }

@@ -1,7 +1,10 @@
 package com.finpro.twogoods.entity;
 
+import com.finpro.twogoods.dto.response.CustomerProfileResponse;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,11 +16,13 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class User extends BaseEntity implements UserDetails {
+
 	@Column(nullable = false, unique = true)
 	private String username;
 
@@ -39,9 +44,11 @@ public class User extends BaseEntity implements UserDetails {
 	private boolean enabled = true;
 
 	@OneToOne(mappedBy = "user")
+	@JsonManagedReference
 	private CustomerProfile customerProfile;
 
 	@OneToOne(mappedBy = "user")
+	@JsonManagedReference
 	private MerchantProfile merchantProfile;
 
 	@Override
@@ -70,16 +77,23 @@ public class User extends BaseEntity implements UserDetails {
 	}
 
 	public UserResponse toResponse() {
+		MerchantProfileResponse merchantProfileResponse = merchantProfile != null
+				? merchantProfile.toResponse()
+				: null;
+
+		CustomerProfileResponse customerProfileResponse = customerProfile != null
+				? customerProfile.toResponse()
+				: null;
+
 		return UserResponse.builder()
-						   .id(getId())
-						   .username(username)
-						   .email(email)
-						   .fullName(fullName)
-						   .role(role)
-						   .profilePicture(profilePicture)
-						   .merchantProfile(merchantProfile)
-						   .customerProfile(customerProfile)
-						   .profilePicture(profilePicture)
-						   .build();
+				.id(getId())
+				.username(username)
+				.email(email)
+				.fullName(fullName)
+				.role(role)
+				.profilePicture(profilePicture)
+				.merchantProfile(merchantProfileResponse)
+				.customerProfile(customerProfileResponse)
+				.build();
 	}
 }

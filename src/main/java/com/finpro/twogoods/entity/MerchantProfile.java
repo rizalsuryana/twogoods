@@ -1,6 +1,7 @@
 package com.finpro.twogoods.entity;
 
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,6 +27,7 @@ public class MerchantProfile {
 	@OneToOne
 	@MapsId
 	@JoinColumn(name = "user_id")
+	@JsonBackReference
 	private User user;
 
 	@Column(nullable = false)
@@ -34,18 +36,20 @@ public class MerchantProfile {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;
 
+
+
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
-									  .id(id)
-									  .profilePicture(getUser().getProfilePicture())
-									  .role(getUser().getRole())
-									  .email(getUser().getEmail())
-									  .products(products == null
-												? null
-												: products.stream().map(Product::toResponse).toList())
-									  .fullName(getUser().getFullName())
-									  .location(getLocation())
-									  .rating(getRating())
-									  .build();
+				.id(id)
+				.rating(rating)
+				.location(location)
+				.fullName(user != null ? user.getFullName() : null)
+				.email(user != null ? user.getEmail() : null)
+				.profilePicture(user != null ? user.getProfilePicture() : null)
+				.role(user != null ? user.getRole() : null)
+				.products(products == null
+						? null
+						: products.stream().map(Product::toResponse).toList())
+				.build();
 	}
 }

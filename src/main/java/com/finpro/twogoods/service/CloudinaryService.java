@@ -14,12 +14,16 @@ import java.util.Map;
 	private final Cloudinary cloudinary;
 
 	@Transactional(rollbackFor = Exception.class)
-	public String uploadImage(MultipartFile file) {
+	public String uploadImage(MultipartFile file, String folder) {
 		try {
-			Map upload = cloudinary.uploader().upload(file.getBytes(), Map.of());
+			Map upload = cloudinary.uploader().upload(
+					file.getBytes(),
+					Map.of("folder", folder)
+			);
 			return (String) upload.get("secure_url");
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to upload image", e);
 		}
 	}
+
 }
