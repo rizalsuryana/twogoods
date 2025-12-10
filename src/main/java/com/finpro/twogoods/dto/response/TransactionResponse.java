@@ -5,9 +5,13 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
-@Setter @Builder
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TransactionResponse {
 	private Long id;
 	private Long customerId;
@@ -17,5 +21,5 @@ public class TransactionResponse {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
+	private List<TransactionItemResponse> items;
 }
-

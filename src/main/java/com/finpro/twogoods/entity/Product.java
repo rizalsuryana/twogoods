@@ -43,7 +43,7 @@ public class Product extends BaseEntity {
 
 	private String color;
 
-	private boolean isAvailable;
+	private Boolean isAvailable;
 
 	@Enumerated(EnumType.STRING)
 	private ProductCondition condition;

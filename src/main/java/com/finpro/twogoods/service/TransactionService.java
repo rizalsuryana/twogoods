@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -23,12 +24,11 @@ public class TransactionService {
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 
+	// CREATE TRANSACTION
 	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse createTransaction(CreateTransactionRequest request) {
 
-		User currentUser = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+		User currentUser = getCurrentUser();
 
 		if (!currentUser.getRole().equals(UserRole.CUSTOMER)) {
 			throw new ApiException("Only customers can create transactions");
@@ -37,37 +37,71 @@ public class TransactionService {
 		Product product = productRepository.findById(request.getProductId())
 				.orElseThrow(() -> new ApiException("Product not found"));
 
+		if (!product.getIsAvailable()) {
+			throw new ApiException("Product is no longer available");
+		}
+
 		MerchantProfile merchant = product.getMerchant();
 
 		if (merchant.getUser().getId().equals(currentUser.getId())) {
 			throw new ApiException("Merchant cannot buy their own product");
 		}
 
+		// Create transaction
 		Transaction transaction = Transaction.builder()
 				.customer(currentUser)
 				.merchant(merchant)
 				.status(OrderStatus.PENDING)
-				.totalPrice(product.getPrice())
+				.totalPrice(BigDecimal.ZERO)
 				.build();
 
-		Transaction savedTransaction = transactionRepository.save(transaction);
-
+		// Create item (quantity = 1)
 		TransactionItem item = TransactionItem.builder()
-				.transaction(savedTransaction)
+				.transaction(transaction)
 				.product(product)
 				.price(product.getPrice())
+				.quantity(1)
 				.build();
 
-		transactionItemRepository.save(item);
+		transaction.getItems().add(item);
 
-		return savedTransaction.toResponse();
+		// Hitung total otomatis
+		BigDecimal total = item.getSubtotal();
+		transaction.setTotalPrice(total);
+
+		// Simpan transaction + items (cascade)
+		Transaction saved = transactionRepository.save(transaction);
+
+		// Set product unavailable
+		product.setIsAvailable(false);
+		productRepository.save(product);
+
+		return saved.toResponse();
 	}
 
+	// GET DETAIL TRANSACTION
+	@Transactional(readOnly = true)
+	public TransactionResponse getTransactionDetail(Long id) {
+
+		User currentUser = getCurrentUser();
+
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
+		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
+
+		if (!isCustomer && !isMerchant) {
+			throw new ApiException("You are not allowed to view this transaction");
+		}
+
+		return trx.toResponse();
+	}
+
+	// GET CUSTOMER TRANSACTIONS
 	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMyTransactions() {
-		User customer = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+		User customer = getCurrentUser();
 
 		return transactionRepository.findByCustomer(customer)
 				.stream()
@@ -75,11 +109,10 @@ public class TransactionService {
 				.toList();
 	}
 
+	// GET MERCHANT ORDERS
 	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMerchantOrders() {
-		User merchantUser = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+		User merchantUser = getCurrentUser();
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(merchantUser)
 				.orElseThrow(() -> new ApiException("Merchant profile not found"));
@@ -90,12 +123,11 @@ public class TransactionService {
 				.toList();
 	}
 
+	// UPDATE STATUS
 	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse updateStatus(Long id, OrderStatus newStatus) {
 
-		User currentUser = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
 				.orElseThrow(() -> new ApiException("Transaction not found"));
@@ -130,6 +162,7 @@ public class TransactionService {
 				break;
 
 			case CANCELED:
+				if (!isCustomer) throw new ApiException("Only customer can cancel");
 				if (currentStatus == OrderStatus.SHIPPED || currentStatus == OrderStatus.COMPLETED) {
 					throw new ApiException("Cannot cancel after item is shipped");
 				}
@@ -143,5 +176,11 @@ public class TransactionService {
 		Transaction updated = transactionRepository.save(trx);
 
 		return updated.toResponse();
+	}
+
+	private User getCurrentUser() {
+		return (User) SecurityContextHolder.getContext()
+				.getAuthentication()
+				.getPrincipal();
 	}
 }

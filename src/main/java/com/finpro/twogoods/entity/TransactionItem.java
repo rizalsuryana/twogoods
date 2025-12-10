@@ -2,7 +2,6 @@ package com.finpro.twogoods.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -23,4 +22,10 @@ public class TransactionItem extends BaseEntity {
 	private Product product;
 
 	private BigDecimal price;
+
+	private Integer quantity;
+
+	public BigDecimal getSubtotal() {
+		return price.multiply(BigDecimal.valueOf(quantity));
+	}
 }

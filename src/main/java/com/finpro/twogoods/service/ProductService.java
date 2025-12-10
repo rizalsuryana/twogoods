@@ -106,6 +106,7 @@ public class ProductService {
 			String[] keywords = search.trim().toLowerCase().split("\\s+");
 
 			spec = spec.and((root, query, cb) -> {
+//				criteria builder
 				var namePath = cb.lower(cb.coalesce(root.get("name"), ""));
 				List<Predicate> predicates = new ArrayList<>();
 
@@ -174,7 +175,7 @@ public class ProductService {
 		if (request.getPrice() != null) product.setPrice(request.getPrice());
 		if (request.getCategories() != null) product.setCategories(request.getCategories());
 		if (request.getColor() != null) product.setColor(request.getColor());
-		if (request.getIsAvailable() != null) product.setAvailable(request.getIsAvailable());
+		if (request.getIsAvailable() != null) product.setIsAvailable(request.getIsAvailable());
 		if (request.getCondition() != null) product.setCondition(request.getCondition());
 
 		return productRepository.save(product).toResponse();
