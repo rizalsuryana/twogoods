@@ -51,3 +51,5 @@ public class MerchantProfile {
 	}
 
 }
+
+//get all tambahin rating?
