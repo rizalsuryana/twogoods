@@ -26,20 +26,6 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	@Operation(
-			summary = "Test snap request",
-			description = "Testing request for snap."
-	)
-	@PostMapping("/snap")
-	private ResponseEntity<ApiResponse<MidtransSnapResponse>> snap(@RequestBody MidtransSnapRequest request){
-		System.out.println(">>> Controller HIT");
-		return ResponseUtil.buildSingleResponse(
-				HttpStatus.OK,
-				HttpStatus.OK.getReasonPhrase(),
-				transactionService.createSnap(request)
-											   );
-	}
-
 	// CREATE TRANSACTION
 	@Operation(
 			summary = "Create a new transaction",
