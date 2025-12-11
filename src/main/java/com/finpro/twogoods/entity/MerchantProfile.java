@@ -22,7 +22,7 @@ public class MerchantProfile {
 	@Column(name = "nomor_ktp")
 	private String NIK;
 
-	private float rating;
+//	private float rating;
 
 	@OneToOne
 	@MapsId
@@ -36,12 +36,9 @@ public class MerchantProfile {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;
 
-
-
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
 				.id(id)
-				.rating(rating)
 				.location(location)
 				.fullName(user != null ? user.getFullName() : null)
 				.email(user != null ? user.getEmail() : null)
@@ -52,4 +49,5 @@ public class MerchantProfile {
 						: products.stream().map(Product::toResponse).toList())
 				.build();
 	}
+
 }

@@ -4,6 +4,7 @@ import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.repository.MerchantReviewRepository;
 import com.finpro.twogoods.service.MerchantProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class MerchantProfileController {
 
 	private final MerchantProfileService merchantProfileService;
+	private final MerchantReviewRepository merchantReviewRepository;
 
 	//  GET PAGINATED
 	@GetMapping
@@ -53,16 +55,25 @@ public class MerchantProfileController {
 	}
 
 	//  GET BY ID
+//	TODO :  GANTI....
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<MerchantProfileResponse>> getById(@PathVariable Long id) {
 		MerchantProfile profile = merchantProfileService.getMerchantById(id);
 
+		Double avg = merchantReviewRepository.getAverageRating(id);
+		Long total = merchantReviewRepository.getTotalReviews(id);
+
+		MerchantProfileResponse response = profile.toResponse();
+		response.setRating(avg != null ? avg : 0);
+		response.setTotalReviews(total);
+
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant profile fetched successfully",
-				profile.toResponse()
+				response
 		);
 	}
+
 
 	//  UPDATE (only owner)
 	@PutMapping("/{id}")
@@ -111,4 +122,6 @@ public class MerchantProfileController {
 				null
 		);
 	}
+
+
 }
