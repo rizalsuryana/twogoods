@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 	List<Transaction> findByCustomer(User customer);
 	List<Transaction> findByMerchant(MerchantProfile merchant);
+	Optional<Transaction> findByOrderId(String orderId);
 }
