@@ -10,25 +10,25 @@ import java.util.List;
 
 public class GeminiDto {
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Builder
-	public static class Question {
-		private String question;
-		private Long studentId;
-	}
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Question {
+        private String question;
+        private Long studentId;
+    }
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Builder
-	public static class Answer {
-		@NotBlank
-		private String answer;
-		private String modelVersion;
-		private String responseId;
-	}
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Answer {
+        @NotBlank
+        private String answer;
+        private String modelVersion;
+        private String responseId;
+    }
 
 	@Data
 	@NoArgsConstructor
