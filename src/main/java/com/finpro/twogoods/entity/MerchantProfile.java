@@ -40,7 +40,7 @@ public class MerchantProfile {
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
 									  .id(id)
-									  .rating(rating)
+				.rating(rating)
 									  .location(location)
 									  .fullName(user != null ? user.getFullName() : null)
 									  .email(user != null ? user.getEmail() : null)
