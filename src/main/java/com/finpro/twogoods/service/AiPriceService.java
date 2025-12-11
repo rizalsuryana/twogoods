@@ -25,7 +25,6 @@ public class AiPriceService {
 
 	public SuggestPriceResponse suggestPrice(SuggestPriceRequest req) {
 
-		//  1. Fetch similar products
 		Categories mainCategory = req.getCategories().get(0);
 
 		List<Product> similar = productRepository.findSimilarProducts(
@@ -33,17 +32,12 @@ public class AiPriceService {
 				req.getCondition()
 		);
 
-
+		//  Jika tidak ada data → AI murni (Rupiah)
 		if (similar.isEmpty()) {
-			return SuggestPriceResponse.builder()
-					.recommendedPrice(BigDecimal.ZERO)
-					.minRange(BigDecimal.ZERO)
-					.maxRange(BigDecimal.ZERO)
-					.reasoning("No similar products found in the database.")
-					.build();
+			return askAiWithoutDatabase(req);
 		}
 
-		//  2. Extract price statistics
+		//  Jika ada data → hitung statistik
 		List<BigDecimal> prices = similar.stream()
 				.map(Product::getPrice)
 				.toList();
@@ -54,22 +48,27 @@ public class AiPriceService {
 				.reduce(BigDecimal.ZERO, BigDecimal::add)
 				.divide(BigDecimal.valueOf(prices.size()), 2, RoundingMode.HALF_UP);
 
-		//  3. Build AI prompt (English)
 		String prompt = """
-                You are an AI assistant that recommends product prices based on similar items.
+                You are an AI assistant that recommends product prices for the Indonesian marketplace.
 
                 Product details:
                 - Name: %s
                 - Description: %s
-                - Categories: %s
+                - Category: %s
                 - Condition: %s
 
-                Similar product price statistics:
+                Similar product price statistics (in Indonesian Rupiah):
                 - Minimum price: %s
                 - Maximum price: %s
                 - Average price: %s
 
-                Based on the data above, generate a JSON response with the following structure:
+                IMPORTANT RULES:
+                - All prices MUST be in Indonesian Rupiah (IDR)
+                - Use plain numbers only (e.g., 75000), no commas, no dots, no currency symbols
+                - Prices must be realistic for the Indonesian second-hand market
+                - Do NOT output decimals
+
+                Respond ONLY with valid JSON:
 
                 {
                   "recommendedPrice": number,
@@ -77,17 +76,60 @@ public class AiPriceService {
                   "maxRange": number,
                   "reasoning": "string"
                 }
-
-                Only return valid JSON.
                 """.formatted(
 				req.getName(),
 				req.getDescription(),
-				req.getCategories(),
+				mainCategory,
 				req.getCondition(),
 				min, max, avg
 		);
 
-		//  4. Build Gemini request
+		return callAiAndParse(prompt, avg, min, max);
+	}
+
+	//  AI fallback ketika database kosong (Rupiah)
+	private SuggestPriceResponse askAiWithoutDatabase(SuggestPriceRequest req) {
+
+		String prompt = """
+                You are an AI assistant that recommends product prices for the Indonesian marketplace.
+
+                Product details:
+                - Name: %s
+                - Description: %s
+                - Category: %s
+                - Condition: %s
+
+                There are no similar products in the database.
+
+                Based on general market knowledge in INDONESIA, estimate a reasonable price range in Indonesian Rupiah (IDR).
+
+                IMPORTANT RULES:
+                - All prices MUST be in Indonesian Rupiah (IDR)
+                - Use plain numbers only (e.g., 75000), no commas, no dots, no currency symbols
+                - Prices must be realistic for the Indonesian second-hand market
+                - Do NOT output decimals
+
+                Respond ONLY with valid JSON:
+
+                {
+                  "recommendedPrice": number,
+                  "minRange": number,
+                  "maxRange": number,
+                  "reasoning": "string"
+                }
+                """.formatted(
+				req.getName(),
+				req.getDescription(),
+				req.getCategories().get(0),
+				req.getCondition()
+		);
+
+		return callAiAndParse(prompt, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+	}
+
+	//  Method pemanggil AI + sanitizer JSON
+	private SuggestPriceResponse callAiAndParse(String prompt, BigDecimal avg, BigDecimal min, BigDecimal max) {
+
 		GeminiDto.ApiRequest aiRequest = GeminiDto.ApiRequest.builder()
 				.contents(List.of(
 						GeminiDto.Content.builder()
@@ -100,7 +142,6 @@ public class AiPriceService {
 				))
 				.build();
 
-		//  5. Call Gemini
 		GeminiDto.ApiResponse aiResponse = geminiClient.askGemini(aiRequest);
 
 		String aiText = aiResponse.getCandidates()
@@ -108,9 +149,20 @@ public class AiPriceService {
 				.getContent()
 				.getParts()
 				.get(0)
-				.getText();
+				.getText()
+				.trim();
 
-		//  6. Parse JSON from AI
+		//  Sanitizer
+		aiText = aiText.replace("```json", "")
+				.replace("```", "")
+				.trim();
+
+		int start = aiText.indexOf("{");
+		int end = aiText.lastIndexOf("}");
+		if (start != -1 && end != -1) {
+			aiText = aiText.substring(start, end + 1);
+		}
+
 		try {
 			return objectMapper.readValue(aiText, SuggestPriceResponse.class);
 		} catch (Exception e) {

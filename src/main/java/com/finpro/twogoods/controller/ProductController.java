@@ -204,6 +204,7 @@ public class ProductController {
 		);
 	}
 
+	@Operation(summary = "AI recommendation")
 	@PostMapping("/suggest-price")
 	public ResponseEntity<ApiResponse<SuggestPriceResponse>> suggestPrice(
 			@RequestBody SuggestPriceRequest request
@@ -216,5 +217,6 @@ public class ProductController {
 				response
 		);
 	}
+
 
 }
