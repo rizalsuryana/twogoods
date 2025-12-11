@@ -26,39 +26,19 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	@Operation(
-			summary = "Test snap request",
-			description = "Testing request for snap."
-	)
-	@PostMapping("/snap")
-	private ResponseEntity<ApiResponse<MidtransSnapResponse>> snap(@RequestBody MidtransSnapRequest request){
-		System.out.println(">>> Controller HIT");
-		return ResponseUtil.buildSingleResponse(
-				HttpStatus.OK,
-				HttpStatus.OK.getReasonPhrase(),
-				transactionService.createSnap(request)
-											   );
-	}
-
-	// CREATE TRANSACTION
-	@Operation(
-			summary = "Create a new transaction",
-			description = """
-                    Create a transaction for a product.
-                    Only customers can create transactions.
-                    Product must be available.
-                    """
-	)
-	@PostMapping
-	public ResponseEntity<ApiResponse<TransactionResponse>> create(
-			@RequestBody CreateTransactionRequest request
+// Buy Now
+	@PostMapping("/buy-now/{productId}")
+	public ResponseEntity<ApiResponse<TransactionResponse>> buyNow(
+			@PathVariable Long productId
 	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.CREATED,
-				"Transaction created successfully",
-				transactionService.createTransaction(request)
+				"Buy now successful",
+				transactionService.buyNow(productId)
 		);
 	}
+
+
 	// GET DETAIL TRANSACTION
 	@Operation(
 			summary = "Get transaction detail",
