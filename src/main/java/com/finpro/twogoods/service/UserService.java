@@ -26,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.finpro.twogoods.utils.*;
 
 import java.util.List;
 
@@ -137,6 +138,9 @@ public class UserService implements UserDetailsService {
 	@Transactional(rollbackFor = Exception.class)
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
+
+//		validate dari utils file validator
+		FileValidator.validateImage(file);
 
 		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
 
