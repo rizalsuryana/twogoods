@@ -32,6 +32,8 @@ public class Transaction extends BaseEntity {
 
 	private BigDecimal totalPrice;
 
+	private String orderId;
+
 	@OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
 	@Builder.Default
 	private List<TransactionItem> items = new ArrayList<>();
@@ -47,6 +49,7 @@ public class Transaction extends BaseEntity {
 				.totalPrice(totalPrice)
 				.createdAt(getCreatedAt())
 				.updatedAt(getUpdatedAt())
+				.orderId(getOrderId())
 				.items(
 						items.stream()
 								.map(item -> TransactionItemResponse.builder()

@@ -1,5 +1,7 @@
 package com.finpro.twogoods.service;
 
+import com.finpro.twogoods.client.dto.MidtransNotification;
+import com.finpro.twogoods.dto.request.CreateTransactionRequest;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
@@ -19,7 +21,6 @@ import java.util.List;
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
-	private final TransactionItemRepository transactionItemRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 
@@ -112,6 +113,7 @@ public class TransactionService {
 				.map(Transaction::toResponse)
 				.toList();
 	}
+
 
 	// UPDATE STATUS
 	@Transactional(rollbackFor = Exception.class)

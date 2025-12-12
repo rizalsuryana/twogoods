@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class TransactionResponse {
 	private Long id;
+	private String orderId;
 	private Long customerId;
 	private Long merchantId;
 	private OrderStatus status;
