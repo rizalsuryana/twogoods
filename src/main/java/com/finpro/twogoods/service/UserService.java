@@ -3,6 +3,7 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
@@ -96,9 +97,8 @@ public class UserService implements UserDetailsService {
 		merchantProfileRepository.save(
 				MerchantProfile.builder()
 						.user(user)
-						.location(request.getLocation())
-						.NIK(request.getNik())
-//						.rating(0)
+						.location(null)
+						.NIK(null)
 						.build()
 		);
 
@@ -144,6 +144,7 @@ public class UserService implements UserDetailsService {
 
 		return userRepository.save(user);
 	}
+
 
 
 	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {
