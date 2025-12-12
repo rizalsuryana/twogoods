@@ -10,4 +10,5 @@ import java.util.List;
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 	List<CartItem> findByUser(User user);
 	boolean existsByUserAndProduct(User user, Product product);
+	List<CartItem> findByIdIn(List<Long> ids);
 }
