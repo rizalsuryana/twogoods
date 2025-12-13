@@ -1,10 +1,12 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.dto.request.CustomerProfileUpdateRequest;
 import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.CustomerProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
+@Tag(name="Customer-Profile")
 public class CustomerController {
 
 	private final CustomerProfileService customerProfileService;
@@ -47,7 +50,7 @@ public class CustomerController {
 	@PutMapping("/{id}")
 	public ResponseEntity<?> updateCustomer(
 			@PathVariable Long id,
-			@RequestBody CustomerProfile customerProfile,
+			@RequestBody CustomerProfileUpdateRequest request,
 			Authentication auth
 	) {
 		User user = (User) auth.getPrincipal();
@@ -63,12 +66,13 @@ public class CustomerController {
 		}
 
 		CustomerProfileResponse response =
-				customerProfileService.updateCustomerProfile(id, customerProfile).toResponse();
+				customerProfileService.updateCustomerProfile(id, request).toResponse();
 
 		return ResponseUtil.buildSingleResponse(
-				HttpStatus.CREATED,
-				HttpStatus.CREATED.getReasonPhrase(),
-				response);
+				HttpStatus.OK,
+				"Customer profile updated successfully",
+				response
+		);
 	}
 
 	@DeleteMapping("/{id}")

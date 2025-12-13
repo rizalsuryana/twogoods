@@ -14,6 +14,7 @@ import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
+import com.finpro.twogoods.utils.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -51,6 +52,11 @@ public class ProductService {
 		MerchantProfile merchant = merchantProfileRepository.findByUser(user)
 				.orElseThrow(() -> new ResourceNotFoundException("Merchant profile not found"));
 
+		// BLOCK MERCHANT YANG BELUM VERIFIED
+		if (Boolean.FALSE.equals(merchant.getIsVerified())) {
+			throw new AccessDeniedException("Merchant is not verified. Cannot create product.");
+		}
+
 		Product product = Product.builder()
 				.merchant(merchant)
 				.name(request.getName())
@@ -65,6 +71,7 @@ public class ProductService {
 		return productRepository.save(product).toResponse();
 	}
 
+
 	// GET PRODUCT BY ID
 	@Transactional(readOnly = true)
 	public ProductResponse getProductById(Long id) {
@@ -72,8 +79,7 @@ public class ProductService {
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 		return product.toResponse();
 	}
-
-	// GET PRODUCTS WITH FILTER (multi-category + multi-keyword search)
+	// GET PRODUCTS WITH FILTER (multicategories + multi-keyword search)
 	@Transactional(readOnly = true)
 	public Page<ProductResponse> getProducts(
 			int page,
@@ -87,7 +93,7 @@ public class ProductService {
 			String sort
 	) {
 
-		// Normalisasi sort: handle null, "null", dan kosong
+		// Normalisasi sort
 		if (sort == null || "null".equalsIgnoreCase(sort) || sort.isBlank()) {
 			sort = "newest";
 		}
@@ -98,15 +104,13 @@ public class ProductService {
 			default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
 		};
 
-		// AND chaining untuk semua filter
 		Specification<Product> spec = Specification.allOf();
 
-		// MULTI-KEYWORD SEARCH: "hoodie vintage black"
+		//  MULTI-KEYWORD SEARCH (AND)
 		if (search != null && !search.isBlank()) {
 			String[] keywords = search.trim().toLowerCase().split("\\s+");
 
 			spec = spec.and((root, query, cb) -> {
-//				criteria builder
 				var namePath = cb.lower(cb.coalesce(root.get("name"), ""));
 				List<Predicate> predicates = new ArrayList<>();
 
@@ -114,26 +118,30 @@ public class ProductService {
 					predicates.add(cb.like(namePath, "%" + keyword + "%"));
 				}
 
-				// Semua keyword harus match (AND)
 				return cb.and(predicates.toArray(Predicate[]::new));
 			});
 		}
 
-		// MULTI-CATEGORY FILTER (OR): categories=Male,Shirt
+//  MULTI-CATEGORY FILTER (AND): produk harus punya SEMUA kategori
 		if (categories != null && !categories.isEmpty()) {
 			spec = spec.and((root, query, cb) -> {
-				var join = root.join("categories"); // JOIN ke element collection
-				List<Predicate> predicates = new ArrayList<>();
+				query.distinct(true);
 
-				for (Categories cat : categories) {
-					predicates.add(cb.equal(join, cat));
-				}
+				var join = root.join("categories");
 
-				return cb.or(predicates.toArray(Predicate[]::new));
+				// hitung berapa kategori yang match
+				Predicate inCategories = join.in(categories);
+
+				// group by product.id dan HAVING count(distinct category) = jumlah kategori yang diminta
+				query.groupBy(root.get("id"));
+				query.having(cb.equal(cb.countDistinct(join), categories.size()));
+
+				return inCategories;
 			});
 		}
 
 
+		//  PRICE FILTERS
 		if (minPrice != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.greaterThanOrEqualTo(root.get("price"), minPrice));
@@ -144,11 +152,13 @@ public class ProductService {
 					cb.lessThanOrEqualTo(root.get("price"), maxPrice));
 		}
 
+		//  CONDITION FILTER
 		if (condition != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.equal(root.get("condition"), condition));
 		}
 
+		//  AVAILABILITY FILTER
 		if (isAvailable != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.equal(root.get("isAvailable"), isAvailable));
@@ -158,6 +168,7 @@ public class ProductService {
 
 		return result.map(Product::toResponse);
 	}
+
 
 	// UPDATE PRODUCT
 	@Transactional(rollbackFor = Exception.class)
@@ -195,28 +206,6 @@ public class ProductService {
 		productRepository.delete(product);
 	}
 
-	// UPLOAD IMAGE
-	@Transactional(rollbackFor = Exception.class)
-	public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) throws IOException {
-
-		if (!isOwner(productId)) {
-			throw new AccessDeniedException("You can only upload images to your own product");
-		}
-
-		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-		String imageUrl = cloudinaryService.uploadImage(file, "products");
-
-		ProductImage saved = productImageRepository.save(
-				ProductImage.builder()
-						.product(product)
-						.imageUrl(imageUrl)
-						.build()
-		);
-
-		return saved.toResponse();
-	}
 
 	// UPLOAD MULTIPLE IMAGES
 	@Transactional(rollbackFor = Exception.class)
@@ -232,6 +221,8 @@ public class ProductService {
 		List<ProductImageResponse> responses = new ArrayList<>();
 
 		for (MultipartFile file : files) {
+
+			FileValidator.validateImage(file);
 
 			String imageUrl = cloudinaryService.uploadImage(file, "products");
 
