@@ -1,10 +1,7 @@
 package com.finpro.twogoods.seeder;
 
 import com.finpro.twogoods.entity.*;
-import com.finpro.twogoods.enums.Categories;
-import com.finpro.twogoods.enums.ProductCondition;
-import com.finpro.twogoods.enums.UserRole;
-import com.finpro.twogoods.enums.OrderStatus;
+import com.finpro.twogoods.enums.*;
 import com.finpro.twogoods.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -36,11 +33,6 @@ public class DataSeeder implements CommandLineRunner {
 
 		if (userRepository.count() > 1) return;
 
-		//  ADMIN
-		User admin = createUser("admin@mail.com", "admin", "Super Admin", UserRole.ADMIN);
-		admin.setEnabled(true);
-		userRepository.save(admin);
-
 		//  CUSTOMER
 		User c1 = createUser("customer1@mail.com", "cust1", "Customer One", UserRole.CUSTOMER);
 		User c2 = createUser("customer2@mail.com", "cust2", "Customer Two", UserRole.CUSTOMER);
@@ -52,6 +44,7 @@ public class DataSeeder implements CommandLineRunner {
 				CustomerProfile.builder().user(c3).build()
 		));
 
+
 		//  MERCHANT (belum diverifikasi, belum upload KTP)
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
 		User m2 = createUser("merchant2@mail.com", "merch2", "Merchant Two", UserRole.MERCHANT);
@@ -62,7 +55,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Jakarta")
 				.NIK("1111111111111111")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.PENDING)
 				.rejectReason(null)
 				.build();
 
@@ -71,7 +64,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Bandung")
 				.NIK("2222222222222222")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.NEW)
 				.rejectReason(null)
 				.build();
 
@@ -80,7 +73,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Surabaya")
 				.NIK("3333333333333333")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.PENDING)
 				.rejectReason(null)
 				.build();
 
