@@ -8,6 +8,7 @@ import com.finpro.twogoods.entity.Product;
 import com.finpro.twogoods.entity.ProductImage;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.Categories;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.enums.ProductCondition;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
@@ -39,6 +40,13 @@ public class ProductService {
 	private final ProductImageRepository productImageRepository;
 	private final CloudinaryService cloudinaryService;
 
+// HELPER untuk si acc merchant
+	private void verifiedMerchant(MerchantProfile merchant){
+		if (merchant.getIsVerified() != MerchantStatus.ACCEPTED){
+			throw new AccessDeniedException("Verify your merchant first");
+		}
+	}
+
 	// CREATE PRODUCT
 	@Transactional(rollbackFor = Exception.class)
 	public ProductResponse createProduct(ProductRequest request) {
@@ -52,10 +60,9 @@ public class ProductService {
 		MerchantProfile merchant = merchantProfileRepository.findByUser(user)
 				.orElseThrow(() -> new ResourceNotFoundException("Merchant profile not found"));
 
-		// BLOCK MERCHANT YANG BELUM VERIFIED
-		if (Boolean.FALSE.equals(merchant.getIsVerified())) {
-			throw new AccessDeniedException("Merchant is not verified. Cannot create product.");
-		}
+		// Cek verif
+		verifiedMerchant(merchant);
+
 
 		Product product = Product.builder()
 				.merchant(merchant)
@@ -181,6 +188,9 @@ public class ProductService {
 		Product product = productRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
+//		verif
+		verifiedMerchant(product.getMerchant());
+
 		if (request.getName() != null) product.setName(request.getName());
 		if (request.getDescription() != null) product.setDescription(request.getDescription());
 		if (request.getPrice() != null) product.setPrice(request.getPrice());
@@ -203,6 +213,9 @@ public class ProductService {
 		Product product = productRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
+//		verif
+		verifiedMerchant(product.getMerchant());
+
 		productRepository.delete(product);
 	}
 
@@ -217,6 +230,9 @@ public class ProductService {
 
 		Product product = productRepository.findById(productId)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+//		verif
+		verifiedMerchant(product.getMerchant());
 
 		List<ProductImageResponse> responses = new ArrayList<>();
 
@@ -245,6 +261,9 @@ public class ProductService {
 
 		ProductImage image = productImageRepository.findById(imageId)
 				.orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+
+//		verif
+		verifiedMerchant(image.getProduct().getMerchant());
 
 		productImageRepository.delete(image);
 	}
