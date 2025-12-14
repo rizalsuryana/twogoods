@@ -2,6 +2,7 @@ package com.finpro.twogoods.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
+import com.finpro.twogoods.enums.MerchantStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +23,20 @@ public class MerchantProfile {
 	@Column(name = "nomor_ktp")
 	private String NIK;
 
+<<<<<<< HEAD
 	private float rating;
+=======
+	@Column(name = "ktp_photo")
+	private String ktpPhoto;
+
+	@Column(name = "is_verified")
+	private MerchantStatus isVerified = MerchantStatus.NEW;
+
+	@Column(name = "reject_reason")
+	private String rejectReason;
+
+	private String location;
+>>>>>>> 39f143c ([ADD] Add Merchant Status Enum)
 
 	@OneToOne
 	@MapsId
