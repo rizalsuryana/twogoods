@@ -38,8 +38,7 @@ public class SecurityConfig {
 								"/api/v1/users"
 						).permitAll()
 
-						.requestMatchers("/api/**").hasRole("ADMIN")
-						 
+
 						//  PUBLIC: GET products
 						.requestMatchers("GET", "/api/v1/products/**").permitAll()
 
@@ -54,6 +53,7 @@ public class SecurityConfig {
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						//  CUSTOMER ONLY
 						.requestMatchers("/api/v1/customers/**").hasRole("CUSTOMER")
+						.requestMatchers("/api/**").hasRole("ADMIN")
 
 						.anyRequest().authenticated()
 				)

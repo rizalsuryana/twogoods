@@ -188,7 +188,6 @@ public class ProductService {
 		Product product = productRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-//		verif
 		verifiedMerchant(product.getMerchant());
 
 		if (request.getName() != null) product.setName(request.getName());
@@ -212,9 +211,8 @@ public class ProductService {
 
 		Product product = productRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-//		verif
-		verifiedMerchant(product.getMerchant());
+		MerchantProfile merchant = product.getMerchant();
+		verifiedMerchant(merchant);
 
 		productRepository.delete(product);
 	}
@@ -230,9 +228,8 @@ public class ProductService {
 
 		Product product = productRepository.findById(productId)
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-//		verif
-		verifiedMerchant(product.getMerchant());
+		MerchantProfile merchant = product.getMerchant();
+		verifiedMerchant(merchant);
 
 		List<ProductImageResponse> responses = new ArrayList<>();
 
@@ -261,9 +258,9 @@ public class ProductService {
 
 		ProductImage image = productImageRepository.findById(imageId)
 				.orElseThrow(() -> new ResourceNotFoundException("Image not found"));
-
-//		verif
-		verifiedMerchant(image.getProduct().getMerchant());
+		Product product = image.getProduct();
+		MerchantProfile merchant = product.getMerchant();
+		verifiedMerchant(merchant);
 
 		productImageRepository.delete(image);
 	}
