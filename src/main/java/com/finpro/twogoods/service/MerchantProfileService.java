@@ -1,9 +1,12 @@
 package com.finpro.twogoods.service;
 
-import com.finpro.twogoods.dto.request.UserRequest;
+import com.finpro.twogoods.dto.request.MerchantProfileUpdateRequest;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
+import com.finpro.twogoods.repository.MerchantReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,36 +21,56 @@ import java.util.List;
 public class MerchantProfileService {
 
 	private final MerchantProfileRepository merchantProfileRepository;
-	private final UserService userService;
+	private final MerchantReviewRepository merchantReviewRepository;
 
-	public MerchantProfile getMerchantById(Long id) {
-		return merchantProfileRepository.findById(id)
-										.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+	public MerchantProfileResponse getMerchantById(Long id) {
+		MerchantProfile profile = merchantProfileRepository.findById(id)
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
+
+		return buildResponse(profile);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public MerchantProfile updateMerchantProfile(Long id, MerchantProfile merchantProfile) {
+	public MerchantProfileResponse updateMerchantProfile(Long id, MerchantProfileUpdateRequest request) {
 
-		MerchantProfile profile = getMerchantById(id);
+		MerchantProfile profile = merchantProfileRepository.findById(id)
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
 
-		UserRequest userRequest = UserRequest.builder()
-											 .profilePicture(merchantProfile.getUser().getProfilePicture())
-											 .email(merchantProfile.getUser().getEmail())
-											 .password(merchantProfile.getUser().getPassword())
-											 .fullName(merchantProfile.getUser().getFullName())
-											 .username(merchantProfile.getUser().getUsername())
-											 .build();
+		if (request.getNik() != null) {
+			profile.setNIK(request.getNik());
+		}
 
-		userService.updateUser(merchantProfile.getUser().getId(), userRequest);
+		if (request.getLocation() != null) {
+			profile.setLocation(request.getLocation());
+		}
 
-		profile.setLocation(merchantProfile.getLocation());
-		profile.setNIK(merchantProfile.getNIK());
+		MerchantProfile saved = merchantProfileRepository.save(profile);
 
-		return merchantProfileRepository.save(profile);
+		return buildResponse(saved);
 	}
 
-	public Page<MerchantProfile> getAllPaginated(Pageable pageable) {
-		return merchantProfileRepository.findAll(pageable);
+	public MerchantProfileResponse request(Long id) {
+		MerchantProfile profile = merchantProfileRepository.findMerchantProfileById(id)
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
+		if(profile.getNIK() == null || profile.getLocation() == null) {
+			throw new IllegalArgumentException("NIK or Location required");
+		}
+		profile.setIsVerified(MerchantStatus.PENDING);
+		return buildResponse(profile);
+	}
+
+	public Page<MerchantProfileResponse> getAllPaginated(Pageable pageable) {
+		return merchantProfileRepository.findAll(pageable)
+										.map(this::buildResponse);
+	}
+
+	public List<MerchantProfileResponse> getAllMerchantProfiles() {
+		return merchantProfileRepository.findAll().stream()
+										.map(this::buildResponse)
+										.toList();
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -59,7 +82,16 @@ public class MerchantProfileService {
 		merchantProfileRepository.delete(profile);
 	}
 
-	public List<MerchantProfile> getAllMerchantProfiles() {
-		return merchantProfileRepository.findAll();
+	private MerchantProfileResponse buildResponse(MerchantProfile profile) {
+		Float avg = merchantReviewRepository.getAverageRating(profile.getId());
+		Long total = merchantReviewRepository.getTotalReviews(profile.getId());
+
+		Float formatted = avg != null ? Math.round(avg * 10f) / 10f : 0f;
+
+		MerchantProfileResponse response = profile.toResponse();
+		response.setRating(formatted);
+		response.setTotalReviews(total);
+
+		return response;
 	}
 }
