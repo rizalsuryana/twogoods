@@ -1,9 +1,7 @@
 package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.client.MidtransFeignClient;
-import com.finpro.twogoods.client.dto.MidtransNotification;
-import com.finpro.twogoods.client.dto.MidtransSnapRequest;
-import com.finpro.twogoods.client.dto.MidtransSnapResponse;
+import com.finpro.twogoods.client.dto.*;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.Transaction;
 import com.finpro.twogoods.enums.OrderStatus;
@@ -26,7 +24,6 @@ public class MidtransService {
 
 	private final MidtransFeignClient midtransFeignClient;
 	private final TransactionRepository transactionRepository;
-	private final CustomerProfileRepository customerProfileRepository;
 
 	@Value("${midtrans.api-key}")
 	private String serverKey;
@@ -34,6 +31,24 @@ public class MidtransService {
 	@Transactional(rollbackFor = Exception.class)
 	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
 		return midtransFeignClient.createTransaction(request);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public MidtransRefundResponse refund(String orderId, int amount) {
+		MidtransRefundRequest request = new MidtransRefundRequest(
+				amount,
+				"REF-" + System.currentTimeMillis()
+		);
+		return midtransFeignClient.refund(orderId, request);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public MidtransRefundResponse directRefund(String orderId, int amount) {
+		MidtransRefundRequest request = new MidtransRefundRequest(
+				amount,
+				"DIRECTREF-" + System.currentTimeMillis()
+		);
+		return midtransFeignClient.directRefund(orderId, request);
 	}
 
 

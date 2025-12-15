@@ -11,7 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "transactions")
+@Table(
+		name = "transactions",
+		indexes = {
+				@Index(
+						name = "idx_transaction_order_id",
+						columnList = "orderId"
+				)
+		}
+)
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -32,34 +40,36 @@ public class Transaction extends BaseEntity {
 
 	private BigDecimal totalPrice;
 
+	@Column(nullable = false, unique = true, updatable = false)
 	private String orderId;
+
 
 	@OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
 	@Builder.Default
 	private List<TransactionItem> items = new ArrayList<>();
 
 
-
 	public TransactionResponse toResponse() {
 		return TransactionResponse.builder()
-				.id(getId())
-				.customerId(customer != null ? customer.getId() : null)
-				.merchantId(merchant != null ? merchant.getId() : null)
-				.status(status)
-				.totalPrice(totalPrice)
-				.createdAt(getCreatedAt())
-				.updatedAt(getUpdatedAt())
-				.orderId(getOrderId())
-				.items(
-						items.stream()
-								.map(item -> TransactionItemResponse.builder()
-										.productId(item.getProduct().getId())
-										.productName(item.getProduct().getName())
-										.price(item.getPrice())
-										.quantity(item.getQuantity())
-										.build()
-								).toList()
-				)
-				.build();
+								  .id(getId())
+								  .customerId(customer != null ? customer.getId() : null)
+								  .merchantId(merchant != null ? merchant.getId() : null)
+								  .status(status)
+								  .totalPrice(totalPrice)
+								  .createdAt(getCreatedAt())
+								  .updatedAt(getUpdatedAt())
+								  .orderId(getOrderId())
+								  .items(
+										  items.stream()
+											   .map(item -> TransactionItemResponse.builder()
+																				   .productId(item.getProduct().getId())
+																				   .productName(item.getProduct()
+																									.getName())
+																				   .price(item.getPrice())
+																				   .quantity(item.getQuantity())
+																				   .build()
+												   ).toList()
+										)
+								  .build();
 	}
 }

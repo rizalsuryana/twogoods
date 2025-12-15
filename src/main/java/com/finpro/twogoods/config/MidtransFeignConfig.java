@@ -21,9 +21,6 @@ public class MidtransFeignConfig {
 			String base64Auth = Base64.getEncoder()
 									  .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
-			System.out.println(">>>>> USING MIDTRANS SERVER KEY = " + apiKey);
-			System.out.println(">>>>> USING AUTH HEADER = Basic " + base64Auth);
-
 			template.header("Authorization", "Basic " + base64Auth);
 			template.header("Accept", "application/json");
 			template.header("Content-Type", "application/json");

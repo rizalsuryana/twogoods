@@ -1,24 +1,18 @@
 package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.client.dto.MidtransNotification;
+import com.finpro.twogoods.client.dto.MidtransRefundResponse;
 import com.finpro.twogoods.client.dto.MidtransSnapRequest;
 import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
-import com.finpro.twogoods.entity.Transaction;
 import com.finpro.twogoods.service.MidtransService;
-import com.finpro.twogoods.service.TransactionService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/midtrans")
@@ -40,7 +34,7 @@ public class MidtransController {
 											   );
 	}
 
-	@PostMapping("/webhook")
+	@PostMapping("/notification")
 	public ResponseEntity<ApiResponse<TransactionResponse>> webhook(@RequestBody MidtransNotification notif) {
 
 		boolean valid = midtransService.isValidSignature(
@@ -66,5 +60,22 @@ public class MidtransController {
 				trx
 											   );
 	}
+
+	@PostMapping("/refund/{orderId}")
+	public MidtransRefundResponse refund(
+			@PathVariable String orderId,
+			@RequestParam int amount
+										) {
+		return midtransService.refund(orderId, amount);
+	}
+
+	@PostMapping("/direct-refund/{orderId}")
+	public MidtransRefundResponse directRefund(
+			@PathVariable String orderId,
+			@RequestParam int amount
+											  ) {
+		return midtransService.directRefund(orderId, amount);
+	}
+
 
 }

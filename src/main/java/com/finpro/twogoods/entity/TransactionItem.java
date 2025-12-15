@@ -1,9 +1,6 @@
 package com.finpro.twogoods.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 
@@ -16,11 +13,11 @@ import java.math.BigDecimal;
 @Builder
 public class TransactionItem extends BaseEntity {
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "transaction_id")
 	private Transaction transaction;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "product_id")
 	private Product product;
 
