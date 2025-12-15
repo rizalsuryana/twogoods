@@ -2,6 +2,8 @@ package com.finpro.twogoods.config;
 
 import com.finpro.twogoods.security.JwtAuthenticationFilter;
 import com.finpro.twogoods.security.JwtAuthenticationHandler;
+import com.finpro.twogoods.security.OAuth2SuccessHandler;
+import com.finpro.twogoods.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +29,22 @@ public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final JwtAuthenticationHandler jwtAuthenticationHandler;
+	private final OAuth2UserService oAuth2UserService;
+	private final OAuth2SuccessHandler successHandler;
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration config = new CorsConfiguration();
+		config.setAllowedOriginPatterns(List.of("*"));
+		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+		config.setAllowCredentials(true);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", config);
+		return source;
+	}
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
@@ -34,58 +52,44 @@ public class SecurityConfig {
 				.httpBasic(AbstractHttpConfigurer::disable)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session
-										   .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-								  )
+						.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+				)
 				.authorizeHttpRequests(auth -> auth
 
-											   //  PUBLIC
-											   .requestMatchers(
-													   "/swagger-ui/**",
-													   "/v3/api-docs/**",
-													   "/api/v1/auth/**"
-															   ).permitAll()
+						.requestMatchers(
+								"/swagger-ui/**",
+								"/v3/api-docs/**",
+								"/api/v1/auth/**",
+								"/oauth2/**",
+								"/login/**"
+						).permitAll()
 
-											   // Products
-											   .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
 
-											   // Customers
-											   .requestMatchers("/api/v1/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-											   .requestMatchers(HttpMethod.POST, "/api/v1/transactions/**").hasRole("CUSTOMER")
-											   .requestMatchers(HttpMethod.GET, "/api/v1/transactions/me").hasRole("CUSTOMER")
+						.requestMatchers("/api/v1/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/**").hasRole("CUSTOMER")
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/me").hasRole("CUSTOMER")
 
-											   // MERCHANT
-											   .requestMatchers("/api/v1/merchant/**").hasAnyRole("MERCHANT", "ADMIN")
-											   .requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("MERCHANT")
-											   .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("MERCHANT")
-											   .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("MERCHANT")
-											   .requestMatchers(HttpMethod.GET, "/api/v1/transactions/merchant").hasRole("MERCHANT")
+						.requestMatchers("/api/v1/merchant/**").hasAnyRole("MERCHANT", "ADMIN")
+						.requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/merchant/**").hasRole("MERCHANT")
 
-											   // ADMIN
-											   .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-											   // FALLBACK
-											   .anyRequest().authenticated()
-									  )
+						.anyRequest().authenticated()
+				)
 				.exceptionHandling(ex -> ex
-										   .authenticationEntryPoint(jwtAuthenticationHandler.authenticationEntryPoint())
-										   .accessDeniedHandler(jwtAuthenticationHandler.accessDeniedHandler())
-								  )
+						.authenticationEntryPoint(jwtAuthenticationHandler.authenticationEntryPoint())
+						.accessDeniedHandler(jwtAuthenticationHandler.accessDeniedHandler())
+				)
+				.oauth2Login(oauth -> oauth
+						.userInfoEndpoint(user -> user.userService(oAuth2UserService))
+						.successHandler(successHandler)
+				)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
-	}
-
-
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of("*"));
-		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-		config.setAllowCredentials(false);
-
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", config);
-		return source;
 	}
 }
