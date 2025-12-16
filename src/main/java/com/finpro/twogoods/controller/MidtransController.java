@@ -22,6 +22,7 @@ public class MidtransController {
 	public ResponseEntity<String> webhook(@RequestBody MidtransNotification notif) {
 
 		log.info("MIDTRANS NOTIF RECEIVED: {}", notif);
+
 		boolean valid = midtransService.isValidSignature(
 				notif.getOrderId(),
 				notif.getStatusCode(),

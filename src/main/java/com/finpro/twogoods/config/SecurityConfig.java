@@ -58,6 +58,11 @@ public class SecurityConfig {
 
 						// Public
 						.requestMatchers(
+								"/api/v1/midtrans/**"
+										).
+						permitAll()
+
+						.requestMatchers(
 								"/swagger-ui/**",
 								"/v3/api-docs/**",
 								"/api/v1/auth/**",

@@ -39,7 +39,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				path.startsWith("/v3/api-docs") ||
 				path.startsWith("/oauth2") ||
 				path.startsWith("/login") ||
-				path.startsWith("/api/v1/auth")
+				path.startsWith("/api/v1/auth") ||
+				path.startsWith("/api/v1/midtrans")
 		) {
 			filterChain.doFilter(request, response);
 			return;
