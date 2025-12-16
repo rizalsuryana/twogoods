@@ -132,7 +132,7 @@ public class TransactionService {
 	// GET CUSTOMER TRANSACTIONS
 	public PagedResult<TransactionResponse> getMyTransactions(
 			Integer page,
-			Integer rowsPerPage,
+			Integer size,
 			OrderStatus status,
 			String search,
 			String startDate,
@@ -144,7 +144,7 @@ public class TransactionService {
 
 		Pageable pageable = PageRequest.of(
 				page,
-				rowsPerPage,
+				size,
 				sortDir.equalsIgnoreCase("ASC")
 						? Sort.by(sortBy).ascending()
 						: Sort.by(sortBy).descending()
@@ -162,14 +162,26 @@ public class TransactionService {
 				pageable
 		);
 
-		return getTransactionResponsePagedResult(page, rowsPerPage, result);
+		PagingResponse paging = PagingResponse.builder()
+				.page(page)
+				.rowsPerPage(size)
+				.totalRows(result.getTotalElements())
+				.totalPages(result.getTotalPages())
+				.hasNext(result.hasNext())
+				.hasPrevious(result.hasPrevious())
+				.build();
+
+		return PagedResult.<TransactionResponse>builder()
+				.paging(paging)
+				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.build();
 	}
 
 
 	// GET MERCHANT ORDERS
 	public PagedResult<TransactionResponse> getMerchantOrders(
 			Integer page,
-			Integer rowsPerPage,
+			Integer size,
 			OrderStatus status,
 			String search,
 			String startDate,
@@ -184,7 +196,7 @@ public class TransactionService {
 
 		Pageable pageable = PageRequest.of(
 				page,
-				rowsPerPage,
+				size,
 				sortDir.equalsIgnoreCase("ASC")
 						? Sort.by(sortBy).ascending()
 						: Sort.by(sortBy).descending()
@@ -202,7 +214,19 @@ public class TransactionService {
 				pageable
 		);
 
-		return getTransactionResponsePagedResult(page, rowsPerPage, result);
+		PagingResponse paging = PagingResponse.builder()
+				.page(page)
+				.rowsPerPage(size)
+				.totalRows(result.getTotalElements())
+				.totalPages(result.getTotalPages())
+				.hasNext(result.hasNext())
+				.hasPrevious(result.hasPrevious())
+				.build();
+
+		return PagedResult.<TransactionResponse>builder()
+				.paging(paging)
+				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.build();
 	}
 
 	private PagedResult<TransactionResponse> getTransactionResponsePagedResult(Integer page, Integer rowsPerPage, Page<Transaction> result) {

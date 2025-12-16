@@ -63,9 +63,9 @@ public class TransactionController {
 			description = "Get all transactions created by the logged-in customer."
 	)
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> myTransactions(
+	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> getMyTransactions(
 			@RequestParam(defaultValue = "0") Integer page,
-			@RequestParam(defaultValue = "10") Integer rowsPerPage,
+			@RequestParam(name = "size", defaultValue = "10") Integer size,
 			@RequestParam(required = false) OrderStatus status,
 			@RequestParam(required = false) String search,
 			@RequestParam(required = false) String startDate,
@@ -75,9 +75,9 @@ public class TransactionController {
 	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
-				"My transactions fetched successfully",
+				"Customer transactions fetched successfully",
 				transactionService.getMyTransactions(
-						page, rowsPerPage, status, search, startDate, endDate, sortBy, sortDir
+						page, size, status, search, startDate, endDate, sortBy, sortDir
 				)
 		);
 	}
@@ -91,7 +91,7 @@ public class TransactionController {
 	@GetMapping("/merchant")
 	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> merchantOrders(
 			@RequestParam(defaultValue = "0") Integer page,
-			@RequestParam(defaultValue = "10") Integer rowsPerPage,
+			@RequestParam(name = "size", defaultValue = "10") Integer size,
 			@RequestParam(required = false) OrderStatus status,
 			@RequestParam(required = false) String search,
 			@RequestParam(required = false) String startDate,
@@ -103,10 +103,11 @@ public class TransactionController {
 				HttpStatus.OK,
 				"Merchant orders fetched successfully",
 				transactionService.getMerchantOrders(
-						page, rowsPerPage, status, search, startDate, endDate, sortBy, sortDir
+						page, size, status, search, startDate, endDate, sortBy, sortDir
 				)
 		);
 	}
+
 
 
 	// UPDATE STATUS "neww
