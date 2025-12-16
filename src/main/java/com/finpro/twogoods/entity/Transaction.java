@@ -87,6 +87,13 @@ public class Transaction extends BaseEntity {
 										.productName(item.getProduct().getName())
 										.price(item.getPrice())
 										.quantity(item.getQuantity())
+										.productImage(
+												item.getProduct().getImages() != null &&
+														!item.getProduct().getImages().isEmpty()
+														? item.getProduct().getImages().get(0).getImageUrl()
+														: null
+										)
+
 										.build()
 								).toList()
 				)

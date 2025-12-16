@@ -13,4 +13,5 @@ public class TransactionItemResponse {
 	private String productName;
 	private BigDecimal price;
 	private Integer quantity;
+	private String productImage;
 }
