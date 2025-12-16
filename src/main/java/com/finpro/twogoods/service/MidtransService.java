@@ -19,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,8 +37,8 @@ public class MidtransService {
 	@Transactional(rollbackFor = Exception.class)
 	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
 		log.error("CALL MIDTRANS SNAP ORDER_ID={}",
-				  request.getTransactionDetails()
-						 .getOrderId());
+				request.getTransactionDetails()
+						.getOrderId());
 
 		return midtransFeignClient.createTransaction(request);
 	}
@@ -46,17 +48,17 @@ public class MidtransService {
 	public MidtransRefundResponse refund(String orderId, int amount) {
 
 		Transaction trx = transactionRepository.findByOrderId(orderId)
-											   .orElseThrow(() -> new ApiException("Transaction not found"));
+				.orElseThrow(() -> new ApiException("Transaction not found"));
 
 		if (trx.getStatus() != OrderStatus.PAID &&
-			trx.getStatus() != OrderStatus.SHIPPED) {
+				trx.getStatus() != OrderStatus.SHIPPED) {
 			throw new ApiException("Refund only allowed for PAID or SHIPPED transaction");
 		}
 
 		MidtransRefundRequest request = MidtransRefundRequest.builder()
-															 .refund_amount(amount)
-															 .refund_key("REF-" + System.currentTimeMillis())
-															 .build();
+				.refund_amount(amount)
+				.refund_key("REF-" + System.currentTimeMillis())
+				.build();
 
 		return midtransFeignClient.refund(orderId, request);
 	}
@@ -65,16 +67,16 @@ public class MidtransService {
 	public MidtransRefundResponse directRefund(String orderId, int amount) {
 
 		Transaction trx = transactionRepository.findByOrderId(orderId)
-											   .orElseThrow(() -> new ApiException("Transaction not found"));
+				.orElseThrow(() -> new ApiException("Transaction not found"));
 
 		if (trx.getStatus() != OrderStatus.PAID) {
 			throw new ApiException("Direct refund only allowed for PAID transaction");
 		}
 
 		MidtransRefundRequest request = MidtransRefundRequest.builder()
-															 .refund_amount(amount)
-															 .refund_key("DIRECT-" + System.currentTimeMillis())
-															 .build();
+				.refund_amount(amount)
+				.refund_key("DIRECT-" + System.currentTimeMillis())
+				.build();
 
 		return midtransFeignClient.directRefund(orderId, request);
 	}
@@ -84,13 +86,13 @@ public class MidtransService {
 			String statusCode,
 			String grossAmount,
 			String signatureKey
-								   ) {
+	) {
 		try {
 			String raw =
 					orderId +
-					statusCode +
-					grossAmount +
-					serverKey;
+							statusCode +
+							grossAmount +
+							serverKey;
 
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
 			byte[] digest = md.digest(raw.getBytes(StandardCharsets.UTF_8));
@@ -111,13 +113,13 @@ public class MidtransService {
 	public TransactionResponse updateStatus(MidtransNotification notif) {
 
 		Transaction trx = transactionRepository.findByOrderId(notif.getOrderId())
-											   .orElseThrow(() -> new ApiException("Order not found"));
+				.orElseThrow(() -> new ApiException("Order not found"));
 
 		OrderStatus currentStatus = trx.getStatus();
 
 		if (currentStatus == OrderStatus.PAID ||
-			currentStatus == OrderStatus.SHIPPED ||
-			currentStatus == OrderStatus.COMPLETED) {
+				currentStatus == OrderStatus.SHIPPED ||
+				currentStatus == OrderStatus.COMPLETED) {
 
 			return trx.toResponse();
 		}
@@ -149,7 +151,16 @@ public class MidtransService {
 				return trx.toResponse();
 		}
 
+		// Paid auto cancel kalo gak di handle ama si merchant
+		if (trx.getStatus() == OrderStatus.PAID) {
+			trx.setPaidAt(LocalDateTime.now());
+			// auto cancel 24 jam dulu
+			trx.setAutoCancelAt(LocalDateTime.now().plusHours(24));
+		}
+
+
 		Transaction saved = transactionRepository.save(trx);
 		return saved.toResponse();
 	}
+
 }

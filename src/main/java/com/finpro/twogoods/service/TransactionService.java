@@ -2,6 +2,8 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.client.dto.MidtransSnapRequest;
 import com.finpro.twogoods.client.dto.MidtransSnapResponse;
+import com.finpro.twogoods.dto.response.PagedResult;
+import com.finpro.twogoods.dto.response.PagingResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
@@ -13,9 +15,14 @@ import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -123,30 +130,105 @@ public class TransactionService {
 	}
 
 	// GET CUSTOMER TRANSACTIONS
-	@Transactional(readOnly = true)
-	public List<TransactionResponse> getMyTransactions() {
+	public PagedResult<TransactionResponse> getMyTransactions(
+			Integer page,
+			Integer rowsPerPage,
+			OrderStatus status,
+			String search,
+			String startDate,
+			String endDate,
+			String sortBy,
+			String sortDir
+	) {
 		User customer = getCurrentUser();
 
-		return transactionRepository.findByCustomer(customer)
-									.stream()
-									.map(Transaction::toResponse)
-									.toList();
+		Pageable pageable = PageRequest.of(
+				page - 1,
+				rowsPerPage,
+				sortDir.equalsIgnoreCase("ASC")
+						? Sort.by(sortBy).ascending()
+						: Sort.by(sortBy).descending()
+		);
+
+		LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+		LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+
+		Page<Transaction> result = transactionRepository.filterCustomerTransactions(
+				customer.getId(),
+				status,
+				search,
+				start,
+				end,
+				pageable
+		);
+
+		PagingResponse paging = PagingResponse.builder()
+				.page(page)
+				.rowsPerPage(rowsPerPage)
+				.totalRows(result.getTotalElements())
+				.totalPages(result.getTotalPages())
+				.hasNext(result.hasNext())
+				.hasPrevious(result.hasPrevious())
+				.build();
+
+		return PagedResult.<TransactionResponse>builder()
+				.paging(paging)
+				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.build();
 	}
 
+
 	// GET MERCHANT ORDERS
-	@Transactional(readOnly = true)
-	public List<TransactionResponse> getMerchantOrders() {
+	public PagedResult<TransactionResponse> getMerchantOrders(
+			Integer page,
+			Integer rowsPerPage,
+			OrderStatus status,
+			String search,
+			String startDate,
+			String endDate,
+			String sortBy,
+			String sortDir
+	) {
 		User merchantUser = getCurrentUser();
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(merchantUser)
-															.orElseThrow(() -> new ApiException(
-																	"Merchant profile not found"));
+				.orElseThrow(() -> new ApiException("Merchant profile not found"));
 
-		return transactionRepository.findByMerchant(merchant)
-									.stream()
-									.map(Transaction::toResponse)
-									.toList();
+		Pageable pageable = PageRequest.of(
+				page - 1,
+				rowsPerPage,
+				sortDir.equalsIgnoreCase("ASC")
+						? Sort.by(sortBy).ascending()
+						: Sort.by(sortBy).descending()
+		);
+
+		LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+		LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+
+		Page<Transaction> result = transactionRepository.filterMerchantOrders(
+				merchant.getId(),
+				status,
+				search,
+				start,
+				end,
+				pageable
+		);
+
+		PagingResponse paging = PagingResponse.builder()
+				.page(page)
+				.rowsPerPage(rowsPerPage)
+				.totalRows(result.getTotalElements())
+				.totalPages(result.getTotalPages())
+				.hasNext(result.hasNext())
+				.hasPrevious(result.hasPrevious())
+				.build();
+
+		return PagedResult.<TransactionResponse>builder()
+				.paging(paging)
+				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.build();
 	}
+
 
 
 	// UPDATE STATUS

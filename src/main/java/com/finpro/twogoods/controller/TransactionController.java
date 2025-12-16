@@ -2,6 +2,7 @@ package com.finpro.twogoods.controller;
 
 
 import com.finpro.twogoods.dto.response.ApiResponse;
+import com.finpro.twogoods.dto.response.PagedResult;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.service.TransactionService;
@@ -62,13 +63,25 @@ public class TransactionController {
 			description = "Get all transactions created by the logged-in customer."
 	)
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<List<TransactionResponse>>> myTransactions() {
+	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> myTransactions(
+			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "10") Integer rowsPerPage,
+			@RequestParam(required = false) OrderStatus status,
+			@RequestParam(required = false) String search,
+			@RequestParam(required = false) String startDate,
+			@RequestParam(required = false) String endDate,
+			@RequestParam(defaultValue = "createdAt") String sortBy,
+			@RequestParam(defaultValue = "DESC") String sortDir
+	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"My transactions fetched successfully",
-				transactionService.getMyTransactions()
+				transactionService.getMyTransactions(
+						page, rowsPerPage, status, search, startDate, endDate, sortBy, sortDir
+				)
 		);
 	}
+
 
 	// GET MERCHANT ORDERS
 	@Operation(
@@ -76,13 +89,25 @@ public class TransactionController {
 			description = "Get all orders received by the logged-in merchant."
 	)
 	@GetMapping("/merchant")
-	public ResponseEntity<ApiResponse<List<TransactionResponse>>> merchantOrders() {
+	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> merchantOrders(
+			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "10") Integer rowsPerPage,
+			@RequestParam(required = false) OrderStatus status,
+			@RequestParam(required = false) String search,
+			@RequestParam(required = false) String startDate,
+			@RequestParam(required = false) String endDate,
+			@RequestParam(defaultValue = "createdAt") String sortBy,
+			@RequestParam(defaultValue = "DESC") String sortDir
+	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant orders fetched successfully",
-				transactionService.getMerchantOrders()
+				transactionService.getMerchantOrders(
+						page, rowsPerPage, status, search, startDate, endDate, sortBy, sortDir
+				)
 		);
 	}
+
 
 	// UPDATE STATUS "neww
 	@Operation(

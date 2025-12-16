@@ -60,8 +60,14 @@ public class Transaction extends BaseEntity {
 	@Builder.Default
 	private Boolean merchantReturnConfirm = false;
 
+	//	cancel return and cancel
 	private LocalDateTime returnRequestedAt;
 	private LocalDateTime cancelRequestedAt;
+
+	//	auto cancel si paid
+	private LocalDateTime paidAt;
+	private LocalDateTime autoCancelAt;
+
 
 	public TransactionResponse toResponse() {
 		return TransactionResponse
