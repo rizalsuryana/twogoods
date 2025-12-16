@@ -1,8 +1,6 @@
 package com.finpro.twogoods.controller;
 
-import com.finpro.twogoods.client.dto.MidtransSnapRequest;
-import com.finpro.twogoods.client.dto.MidtransSnapResponse;
-import com.finpro.twogoods.dto.request.CreateTransactionRequest;
+
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.enums.OrderStatus;
@@ -86,20 +84,22 @@ public class TransactionController {
 		);
 	}
 
-	// UPDATE STATUS (Shopee Flow)
+	// UPDATE STATUS "neww
 	@Operation(
 			summary = "Update transaction status",
 			description = """
-                    Update transaction status following Shopee-like flow:
-                    
-                    CUSTOMER:
-                    - COMPLETED (only after SHIPPED)
-                    - CANCELED (only before SHIPPED)
-                    
-                    MERCHANT:
-                    - PAID (only from PENDING)
-                    - SHIPPED (only from PAID)
-                    """
+                    Update transaction status flow:
+
+				CUSTOMER:
+				- COMPLETED (only after SHIPPED)
+				- CANCELED (only before SHIPPED)
+
+				MERCHANT:
+				- SHIPPED (only after PAID)
+
+				NOTE:
+				- PAID status is controlled by Midtrans webhook
+				"""
 	)
 	@PutMapping("/{id}/status")
 	public ResponseEntity<ApiResponse<TransactionResponse>> updateStatus(
@@ -116,4 +116,78 @@ public class TransactionController {
 				transactionService.updateStatus(id, status)
 		);
 	}
+
+
+	// Customer request cancel
+	@PostMapping("/{id}/request-cancel")
+	public ResponseEntity<ApiResponse<TransactionResponse>> requestCancel(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Cancel request sent",
+				transactionService.requestCancel(id)
+		);
+	}
+
+	// Merchant confirm cancel
+	@PostMapping("/{id}/confirm-cancel")
+	public ResponseEntity<ApiResponse<TransactionResponse>> confirmCancel(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Cancel confirmed",
+				transactionService.confirmCancel(id)
+		);
+	}
+
+	// Customer request return
+	@PostMapping("/{id}/request-return")
+	public ResponseEntity<ApiResponse<TransactionResponse>> requestReturn(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Return request sent",
+				transactionService.requestReturn(id)
+		);
+	}
+
+	// Merchant confirm return
+	@PostMapping("/{id}/confirm-return")
+	public ResponseEntity<ApiResponse<TransactionResponse>> confirmReturn(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Return confirmed",
+				transactionService.confirmReturn(id)
+		);
+	}
+
+	// Merchant reject cancel
+	@PostMapping("/{id}/reject-cancel")
+	public ResponseEntity<ApiResponse<TransactionResponse>> rejectCancel(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Cancel request rejected",
+				transactionService.rejectCancel(id)
+		);
+	}
+
+	// Merchant reject return
+	@PostMapping("/{id}/reject-return")
+	public ResponseEntity<ApiResponse<TransactionResponse>> rejectReturn(
+			@PathVariable Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Return request rejected",
+				transactionService.rejectReturn(id)
+		);
+	}
+
 }

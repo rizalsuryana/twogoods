@@ -323,4 +323,51 @@ public class TransactionService {
 				.getAuthentication()
 				.getPrincipal();
 	}
+
+
+//	Reject Cancel
+@Transactional(rollbackFor = Exception.class)
+public TransactionResponse rejectCancel(Long id) {
+	User user = getCurrentUser();
+	Transaction trx = transactionRepository.findById(id)
+			.orElseThrow(() -> new ApiException("Transaction not found"));
+
+	if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+		throw new ApiException("Only merchant can reject cancel");
+	}
+
+	if (!Boolean.TRUE.equals(trx.getCustomerCancelRequest())) {
+		throw new ApiException("No cancel request to reject");
+	}
+
+	trx.setCustomerCancelRequest(false);
+	trx.setMerchantCancelConfirm(false);
+
+	Transaction saved = transactionRepository.save(trx);
+	return saved.toResponse();
+}
+
+
+//Reject Return
+@Transactional(rollbackFor = Exception.class)
+public TransactionResponse rejectReturn(Long id) {
+	User user = getCurrentUser();
+	Transaction trx = transactionRepository.findById(id)
+			.orElseThrow(() -> new ApiException("Transaction not found"));
+
+	if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+		throw new ApiException("Only merchant can reject return");
+	}
+
+	if (!Boolean.TRUE.equals(trx.getCustomerReturnRequest())) {
+		throw new ApiException("No return request to reject");
+	}
+
+	trx.setCustomerReturnRequest(false);
+	trx.setMerchantReturnConfirm(false);
+
+	Transaction saved = transactionRepository.save(trx);
+	return saved.toResponse();
+}
+
 }

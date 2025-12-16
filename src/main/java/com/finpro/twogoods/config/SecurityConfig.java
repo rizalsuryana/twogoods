@@ -110,6 +110,13 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/confirm-return")
 						.hasAnyRole("MERCHANT", "ADMIN")
 
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/reject-cancel")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/reject-return")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+
 						// BOTH (merchant & customer)
 						.requestMatchers(HttpMethod.PUT, "/api/v1/transactions/*/status")
 						.hasAnyRole("MERCHANT", "CUSTOMER", "ADMIN")
