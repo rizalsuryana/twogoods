@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -53,4 +54,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	boolean existsByEmail(String email);
 
 	Page<User> findAll(Specification<User> specification, Pageable pageable);
+
+	@Query("""
+    SELECT u FROM User u
+    LEFT JOIN FETCH u.merchantProfile mp
+    LEFT JOIN FETCH u.customerProfile cp
+    WHERE u.email = :email
+""")
+	Optional<User> findByEmailWithProfiles(String email);
+
 }
