@@ -18,7 +18,9 @@ import java.util.List;
 public class MerchantProfile {
 
 	@Id
-	private Long id; // sama dengan user_id
+	// sama dengan user_id
+	@Column(name = "user_id")
+	private Long id;
 	@OneToOne
 	@MapsId
 	@JoinColumn(name = "user_id")
