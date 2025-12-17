@@ -86,6 +86,17 @@ public class Transaction extends BaseEntity {
 				.customerReturnRequest(customerReturnRequest)
 				.merchantReturnConfirm(merchantReturnConfirm)
 				.returnRequestedAt(returnRequestedAt)
+				.customer(
+						customer.getCustomerProfile() != null
+								? customer.getCustomerProfile().toResponse()
+								: null
+				)
+				.merchant(
+						merchant.getUser() != null && merchant.getUser().getMerchantProfile() != null
+								? merchant.getUser().getMerchantProfile().toResponse()
+								: null
+				)
+
 				.items(
 						items.stream()
 								.map(item -> TransactionItemResponse.builder()
@@ -103,6 +114,7 @@ public class Transaction extends BaseEntity {
 										.build()
 								).toList()
 				)
+
 				.build();
 	}
 }

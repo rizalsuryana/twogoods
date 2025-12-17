@@ -13,5 +13,6 @@ public class CustomerProfileResponse {
 	private String fullName;
 	private String email;
 	private String profilePicture;
+	private String location;
 	private UserRole role;
 }

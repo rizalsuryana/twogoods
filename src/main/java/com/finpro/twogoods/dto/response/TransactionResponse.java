@@ -30,5 +30,9 @@ public class TransactionResponse {
 	private MidtransSnapResponse midtransSnapResponse;
 	private LocalDateTime returnRequestedAt;
 
+	private CustomerProfileResponse customer;
+	private MerchantProfileResponse merchant;
+
+
 	private List<TransactionItemResponse> items;
 }
