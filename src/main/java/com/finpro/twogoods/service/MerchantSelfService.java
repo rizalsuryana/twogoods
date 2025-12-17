@@ -2,6 +2,7 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
@@ -38,7 +39,9 @@ public class MerchantSelfService {
 		String ktpUrl = cloudinaryService.uploadImage(file, folder);
 
 		merchant.setKtpPhoto(ktpUrl);
-
+//		update status dari new ke pending kalau dah upload
+		merchant.setIsVerified(MerchantStatus.PENDING);
+		merchant.setRejectReason(null);
 		merchantProfileRepository.save(merchant);
 	}
 }
