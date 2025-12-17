@@ -9,4 +9,6 @@ import lombok.*;
 @Builder
 public class CustomerProfileUpdateRequest {
 	private String location;
+	private String phoneNumber;
+
 }

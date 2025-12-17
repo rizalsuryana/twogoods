@@ -35,6 +35,11 @@ public class CustomerProfileService {
 			profile.setLocation(request.getLocation());
 		}
 
+		if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
+			profile.setPhoneNumber(request.getPhoneNumber());
+		}
+
+
 		return customerProfileRepository.save(profile);
 	}
 

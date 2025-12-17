@@ -23,6 +23,10 @@ public class CustomerProfile {
 	@JsonBackReference
 	private User user;
 
+	@Column(name = "phone_number")
+	private String phoneNumber;
+
+
 	@Column
 	private String location;
 
@@ -31,6 +35,7 @@ public class CustomerProfile {
 				.customerId(id)
 				.fullName(user != null ? user.getFullName() : null)
 				.location(location)
+				.phoneNumber(phoneNumber)
 				.email(user != null ? user.getEmail() : null)
 				.profilePicture(user != null ? user.getProfilePicture() : null)
 				.role(user != null ? user.getRole() : null)
