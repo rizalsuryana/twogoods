@@ -18,7 +18,6 @@ public class DatabaseSeeder implements ApplicationRunner {
 	private final UserSeed userSeed;
 	private final CustomerSeed customerSeed;
 	private final MerchantSeed merchantSeed;
-	private final ProductSeed productSeed;
 	private final SeedHistoryRepository seedHistoryRepository;
 
 	@Override
@@ -34,7 +33,6 @@ public class DatabaseSeeder implements ApplicationRunner {
 		seed("V1_USERS", userSeed::seed);
 		seed("V2_CUSTOMERS", customerSeed::seed);
 		seed("V3_MERCHANTS", merchantSeed::seed);
-		seed("V4_PRODUCTS", productSeed::seed);
 	}
 
 	private void seed(String name, Runnable action) {
