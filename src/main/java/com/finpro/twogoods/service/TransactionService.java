@@ -112,7 +112,6 @@ public class TransactionService {
 		return res;
 	}
 
-
 	// GET DETAIL TRANSACTION
 	@Transactional(readOnly = true)
 	public TransactionResponse getTransactionDetail(Long id) {

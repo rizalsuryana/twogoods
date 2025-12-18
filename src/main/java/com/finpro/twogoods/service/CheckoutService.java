@@ -95,6 +95,8 @@ public class CheckoutService {
 								   .build()
 															  );
 
+		responses.forEach((s) -> s.setMidtransSnapResponse(snap));
+
 		return CheckoutResponse.builder()
 							   .midtransSnap(snap)
 							   .transactions(responses)
